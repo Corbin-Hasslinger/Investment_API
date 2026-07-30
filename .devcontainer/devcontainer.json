@@ -1,26 +1,50 @@
 {
   "name": "Investment API Development",
+  "dockerComposeFile": "compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/workspaces/investment-api",
+  "shutdownAction": "stopCompose",
 
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
+  "forwardPorts": [8000],
+
+  "portsAttributes": {
+    "8000": {
+      "label": "FastAPI"
+    }
   },
-
-  "workspaceFolder": "/workspace",
-
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind"
-  ],
 
   "customizations": {
     "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "python.defaultInterpreterPath": "/workspaces/investment-api/.venv/bin/python",
+        "python.analysis.extraPaths": [
+          "/workspaces/investment-api/src"
+        ],
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/.pytest_cache": true,
+          "**/.ruff_cache": true
+        },
+        "search.exclude": {
+          "**/.venv": true,
+          "**/__pycache__": true,
+          "**/.pytest_cache": true,
+          "**/.ruff_cache": true
+        }
+      },
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
         "ms-azuretools.vscode-docker"
       ]
     }
   },
 
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "remoteUser": "root"
 }

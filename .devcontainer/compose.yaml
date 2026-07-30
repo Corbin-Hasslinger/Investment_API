@@ -1,12 +1,12 @@
 services:
-  api:
+  dev:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
 
-    container_name: investment-api
+    container_name: investment-api-dev
 
     volumes:
-      - .:/app
+      - ..:/workspaces/investment-api
 
-    command: python app/main.py
+    command: sleep infinity
