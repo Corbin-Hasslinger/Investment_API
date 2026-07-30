@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: investment-api
+
+    volumes:
+      - .:/app
+
+    command: python app/main.py
