@@ -4,9 +4,9 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
 
-    container_name: investment-api-dev
+    container_name: atlas-api-dev
 
     volumes:
-      - ..:/workspaces/investment-api
+      - ..:/workspaces/atlas-api
 
     command: sleep infinity

@@ -1,8 +1,8 @@
 {
-  "name": "Investment API Development",
+  "name": "Atlas API Development",
   "dockerComposeFile": "compose.yaml",
   "service": "dev",
-  "workspaceFolder": "/workspaces/investment-api",
+  "workspaceFolder": "/workspaces/atlas-api",
   "shutdownAction": "stopCompose",
 
   "forwardPorts": [8000],
@@ -17,9 +17,9 @@
     "vscode": {
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
-        "python.defaultInterpreterPath": "/workspaces/investment-api/.venv/bin/python",
+        "python.defaultInterpreterPath": "/workspaces/atlas-api/.venv/bin/python",
         "python.analysis.extraPaths": [
-          "/workspaces/investment-api/src"
+          "/workspaces/atlas-api/src"
         ],
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false,
