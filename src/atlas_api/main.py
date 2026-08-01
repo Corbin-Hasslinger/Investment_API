@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from atlas_api.schemas.stock import StockQuote
+
 
 class StockPurchase(BaseModel):
     ticker: str
@@ -31,7 +33,7 @@ async def get_stock(ticker: str, days: int = 30):
     }
 
 @app.get("/stocks/{ticker}/quote")
-async def get_stock_quote(ticker: str):
+async def get_stock_quote(ticker: str) -> StockQuote:
     """Fetches the latest stock quote for the given ticker symbol, using the Finnhub API.
 
     Return fields: 
@@ -51,7 +53,7 @@ async def get_stock_quote(ticker: str):
         )
     url = "https://finnhub.io/api/v1/quote"
     params = {
-        "symbol": ticker,
+        "symbol": ticker.upper(),
         "token": FINNHUB_API_KEY
     }
     async with httpx.AsyncClient() as client:
@@ -62,14 +64,14 @@ async def get_stock_quote(ticker: str):
                 detail=f"Error fetching stock quote: {response.text}"
             )
         quote_data = response.json()
-        return {
-            "ticker": ticker.upper(),
-            "current_price": quote_data.get("c"),
-            "price_change": quote_data.get("d"),
-            "percent_change": quote_data.get("dp"),
-            "high_price": quote_data.get("h"),
-            "low_price": quote_data.get("l"),
-            "open_price": quote_data.get("o"),
-            "previous_close_price": quote_data.get("pc"),
-            "timestamp": quote_data.get("t"),
-        }
+        return StockQuote(
+            ticker=ticker.upper(),
+            current_price=quote_data.get("c"),
+            price_change=quote_data.get("d"),
+            percent_change=quote_data.get("dp"),
+            high_price=quote_data.get("h"),
+            low_price=quote_data.get("l"),
+            open_price=quote_data.get("o"),
+            previous_close_price=quote_data.get("pc"),
+            timestamp=quote_data.get("t")
+        )   
