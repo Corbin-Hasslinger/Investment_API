@@ -1,7 +1,4 @@
 
-
-import httpx
-
 from atlas_api.clients.finnhub_client import FinnhubClient
 from atlas_api.schemas.stock import StockQuote
 
