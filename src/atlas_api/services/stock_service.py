@@ -1,15 +1,14 @@
-import os
+
 
 import httpx
-from dotenv import load_dotenv
 
+from atlas_api.clients.finnhub_client import FinnhubClient
 from atlas_api.schemas.stock import StockQuote
 
-load_dotenv()
-
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
 
 class StockService:
+    def __init__(self, finnhub_client: FinnhubClient):
+        self.finnhub_client = finnhub_client
 
     async def fetch_stock_quote(self, ticker: str) -> StockQuote:
         """Fetches the latest stock quote for the given ticker symbol, using the Finnhub API.
@@ -24,25 +23,16 @@ class StockService:
                 pc: Previous close price
                 t: Unix timestamp for the quote.
             """
-        if not FINNHUB_API_KEY:
-            raise ValueError("Finnhub API key not found in environment variables.")
-        url = "https://finnhub.io/api/v1/quote"
-        params = {
-            "symbol": ticker.upper(),
-            "token": FINNHUB_API_KEY
-        }
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            quote_data = response.json()
-            return StockQuote(
-                ticker=ticker.upper(),
-                current_price=quote_data.get("c"),
-                price_change=quote_data.get("d"),
-                percent_change=quote_data.get("dp"),
-                high_price=quote_data.get("h"),
-                low_price=quote_data.get("l"),
-                open_price=quote_data.get("o"),
-                previous_close_price=quote_data.get("pc"),
-                timestamp=quote_data.get("t")
-            )
+        quote_data = await self.finnhub_client.get_quote(ticker)
+        
+        return StockQuote(
+            ticker=ticker.upper(),
+            current_price=quote_data["c"],
+            price_change=quote_data["d"],
+            percent_change=quote_data["dp"],
+            high_price=quote_data["h"],
+            low_price=quote_data["l"],
+            open_price=quote_data["o"],
+            previous_close_price=quote_data["pc"],
+            timestamp=quote_data["t"]
+        )
