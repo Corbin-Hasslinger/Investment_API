@@ -63,15 +63,15 @@ async def get_stock_quote(ticker: str) -> StockQuote:
                 status_code=response.status_code,
                 detail=f"Error fetching stock quote: {response.text}"
             )
-        quote_data = response.json()
-        return StockQuote(
-            ticker=ticker.upper(),
-            current_price=quote_data.get("c"),
-            price_change=quote_data.get("d"),
-            percent_change=quote_data.get("dp"),
-            high_price=quote_data.get("h"),
-            low_price=quote_data.get("l"),
-            open_price=quote_data.get("o"),
-            previous_close_price=quote_data.get("pc"),
-            timestamp=quote_data.get("t")
-        )   
+    quote_data = response.json()
+    return StockQuote(
+        ticker=ticker.upper(),
+        current_price=quote_data.get("c"),
+        price_change=quote_data.get("d"),
+        percent_change=quote_data.get("dp"),
+        high_price=quote_data.get("h"),
+        low_price=quote_data.get("l"),
+        open_price=quote_data.get("o"),
+        previous_close_price=quote_data.get("pc"),
+        timestamp=quote_data.get("t")
+    )   
