@@ -1,77 +1,34 @@
 #!/usr/bin/env python3
 
-import os
+from fastapi import FastAPI
 
-import httpx
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-from atlas_api.schemas.stock import StockQuote
+from atlas_api.core.config import Settings, get_settings
+from atlas_api.routes import API_ROUTERS
 
 
-class StockPurchase(BaseModel):
-    ticker: str
-    shares: int
-    price: float
+def create_app(settings: Settings) -> FastAPI:
+    """Create and configure the FastAPI application."""
+    app = FastAPI(
+        title = settings.app_name,
+    )
 
-load_dotenv()
+    map_routers(app)
+    register_exception_handlers(app)
+    register_lifecycle_hooks(app)
 
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
+    return app
 
-app = FastAPI()
+def map_routers(app: FastAPI) -> None:
+    """Map the routers to the FastAPI application."""
+    for router in API_ROUTERS:
+        app.include_router(router)
 
-@app.get("/")
-async def root():
-    return {"message": "Hello from FastAPI!"}
+def register_exception_handlers(app: FastAPI) -> None:
+    """Register exception handlers for the FastAPI application."""
+    # Add custom exception handlers here if needed
 
-@app.get("/stocks/{ticker}")
-async def get_stock(ticker: str, days: int = 30):
-    return {
-        "ticker": ticker,
-        "days": days,
-    }
+def register_lifecycle_hooks(app: FastAPI) -> None:
+    """Register lifecycle hooks for the FastAPI application."""
+    # Add startup and shutdown events here if needed
 
-@app.get("/stocks/{ticker}/quote")
-async def get_stock_quote(ticker: str) -> StockQuote:
-    """Fetches the latest stock quote for the given ticker symbol, using the Finnhub API.
-
-    Return fields: 
-        c: Current price
-        d: Price change
-        dp: Percent change
-        h: High price of the day
-        l: Low price of the day
-        o: Open price of the day
-        pc: Previous close price
-        t: Unix timestamp for the quote.
-    """
-    if not FINNHUB_API_KEY:
-        raise HTTPException(
-            status_code=500, 
-            detail="Finnhub API key not found in environment variables."
-        )
-    url = "https://finnhub.io/api/v1/quote"
-    params = {
-        "symbol": ticker.upper(),
-        "token": FINNHUB_API_KEY
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail=f"Error fetching stock quote: {response.text}"
-            )
-    quote_data = response.json()
-    return StockQuote(
-        ticker=ticker.upper(),
-        current_price=quote_data.get("c"),
-        price_change=quote_data.get("d"),
-        percent_change=quote_data.get("dp"),
-        high_price=quote_data.get("h"),
-        low_price=quote_data.get("l"),
-        open_price=quote_data.get("o"),
-        previous_close_price=quote_data.get("pc"),
-        timestamp=quote_data.get("t")
-    )   
+app = create_app(get_settings())
