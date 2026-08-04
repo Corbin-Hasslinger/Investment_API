@@ -228,7 +228,7 @@ Endpoints returning collections support pagination to prevent oversized response
 
 ### Paginated Response
 
-``json
+``'json
 {
   "items": [],
   "pagination": {
