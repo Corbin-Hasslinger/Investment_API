@@ -12,6 +12,10 @@ def create_app(settings: Settings) -> FastAPI:
         title = settings.app_name,
     )
 
+    @app.get("/")
+    async def read_root() -> dict[str, str]:
+        return {"status": "ok"}
+
     map_routers(app)
     register_exception_handlers(app)
     register_lifecycle_hooks(app)
