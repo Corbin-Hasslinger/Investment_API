@@ -4,17 +4,18 @@ from uuid import UUID
 from fastapi import Depends
 from sqlmodel import Session
 
-from atlas_api.schemas.user import CurrentUserRead
-
 from .clients.finnhub_client import FinnhubClient
 from .core.config import Settings, get_settings
 from .core.db import get_session
 from .models.users import User
+from .schemas.user import CurrentUserRead
+from .services.portfolio_service import PortfolioService
 from .services.stock_service import StockService
 
 __all__ = [
     "CurrentUserDI",
     "FinnhubClientDI",
+    "PortfolioServiceDI",
     "SessionDI",
     "SettingsDI",
     "StockServiceDI"
@@ -51,3 +52,9 @@ def get_stock_service(finnhub_client: FinnhubClientDI) -> StockService:
 type StockServiceDI = Annotated[StockService, Depends(get_stock_service)]
 
 type SessionDI = Annotated[Session, Depends(get_session)]
+
+def get_portfolio_service(session: SessionDI) -> PortfolioService:
+    """Dependency function to provide a PortfolioService instance."""
+    return PortfolioService(session=session)
+
+type PortfolioServiceDI = Annotated[PortfolioService, Depends(get_portfolio_service)]

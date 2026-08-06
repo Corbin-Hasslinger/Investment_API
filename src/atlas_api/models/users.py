@@ -1,6 +1,7 @@
 
 import datetime
 import uuid
+from datetime import UTC
 
 from sqlalchemy import UUID, Column, DateTime, String
 from sqlmodel import Field, SQLModel
@@ -37,7 +38,7 @@ class User(SQLModel, table=True):
             "created_at", 
             DateTime(timezone=True), 
             nullable=False,
-            default=datetime.datetime.utcnow
+            default=lambda: datetime.datetime.now(UTC)
             )
         )
     updated_at: datetime.datetime = Field(
@@ -45,8 +46,8 @@ class User(SQLModel, table=True):
             "updated_at", 
             DateTime(timezone=True), 
             nullable=False,
-            default=datetime.datetime.utcnow,
-            onupdate=datetime.datetime.utcnow
+            default=lambda: datetime.datetime.now(UTC),
+            onupdate=lambda: datetime.datetime.now(UTC)
             )
         )
 
