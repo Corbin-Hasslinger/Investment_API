@@ -8,6 +8,7 @@ from atlas_api.models.portfolios import Portfolio
 from atlas_api.repositories.portfolio_repository import PortfolioRepository
 from atlas_api.schemas.portfolio import PortfolioCreate, PortfolioRead, PortfolioUpdate
 from atlas_api.services.portfolio_service import PortfolioService
+from atlas_api.tools.pagination import PaginationParams
 from atlas_api.tools.errors import (
     InvalidPortfolioDataError,
     PortfolioAlreadyExistsError,
@@ -37,7 +38,9 @@ def build_portfolio(
 
 @pytest.fixture
 def repository() -> MagicMock:
-    return MagicMock(spec=PortfolioRepository)
+    mock = MagicMock(spec=PortfolioRepository)
+    mock.exists_by_name.return_value = False
+    return mock
 
 
 @pytest.fixture
@@ -86,9 +89,7 @@ def test_create_portfolio_rejects_duplicate_normalized_names_for_same_user(
     repository: MagicMock,
 ) -> None:
     user_id = uuid4()
-    repository.get_all_portfolios.return_value = [
-        build_portfolio(user_id=user_id, name="Retirement")
-    ]
+    repository.exists_by_name.return_value = True
 
     with pytest.raises(PortfolioAlreadyExistsError):
         service.create_portfolio(PortfolioCreate(name="  retirement  ", description=None), user_id)
@@ -116,15 +117,16 @@ def test_get_all_portfolios_maps_repository_models_to_read_schemas(
     older = datetime.now(UTC) - timedelta(days=1)
     newer = datetime.now(UTC)
     repository.get_all_portfolios.return_value = [
-        build_portfolio(user_id=user_id, name="Older", created_at=older, updated_at=older),
         build_portfolio(user_id=user_id, name="Newer", created_at=newer, updated_at=newer),
+        build_portfolio(user_id=user_id, name="Older", created_at=older, updated_at=older),
     ]
 
-    result = service.get_all_portfolios(user_id)
+    result = service.get_all_portfolios(user_id, PaginationParams(page=1, page_size=25))
 
-    assert [type(item) for item in result] == [PortfolioRead, PortfolioRead]
-    assert [item.name for item in result] == ["Newer", "Older"]
-    assert all(item.user_id == user_id for item in result)
+    assert [type(item) for item in result.items] == [PortfolioRead, PortfolioRead]
+    assert [item.name for item in result.items] == ["Newer", "Older"]
+    assert all(item.user_id == user_id for item in result.items)
+    assert result.total == 2
 
 
 def test_update_portfolio_updates_only_provided_fields(service: PortfolioService, repository: MagicMock) -> None:
@@ -226,9 +228,8 @@ def test_update_portfolio_rejects_duplicate_normalized_names_for_same_user(
     portfolio_id = uuid4()
     user_id = uuid4()
     current = build_portfolio(portfolio_id=portfolio_id, user_id=user_id, name="Core")
-    duplicate = build_portfolio(user_id=user_id, name="Retirement")
     repository.get_portfolio_by_id.return_value = current
-    repository.get_all_portfolios.return_value = [current, duplicate]
+    repository.exists_by_name.return_value = True
 
     with pytest.raises(PortfolioAlreadyExistsError):
         service.update_portfolio(portfolio_id, PortfolioUpdate(name=" retirement "), user_id)

@@ -10,6 +10,7 @@ from atlas_api.tools.errors import (
     PortfolioAlreadyExistsError,
     PortfolioNotFoundError,
 )
+from atlas_api.tools.pagination import PaginatedResult, PaginationParams
 
 
 class PortfolioService:
@@ -42,9 +43,8 @@ class PortfolioService:
         if not name:
             raise InvalidPortfolioDataError("Portfolio name must contain non-whitespace text.")
         normalized_name = self._normalize_name(name)
-        for portfolio in (self._to_read(p) for p in self.repository.get_all_portfolios(user_id)):
-            if self._normalize_name(portfolio.name) == normalized_name and portfolio.user_id == user_id:
-                raise PortfolioAlreadyExistsError("Portfolio name already exists for this user.")
+        if self.repository.exists_by_name(normalized_name, user_id):
+            raise PortfolioAlreadyExistsError("Portfolio name already exists for this user.")
         portfolio_id = uuid.uuid4()
         portfolio = self.repository.create_portfolio(Portfolio(
             id=portfolio_id,
@@ -52,11 +52,11 @@ class PortfolioService:
             name=name,
             description=payload.description
         ))
-        if not portfolio:
-            raise PortfolioNotFoundError(f"Portfolio with ID {portfolio_id} not found for user {user_id}")
+        self.repository.commit() 
+        self.repository.refresh(portfolio) 
         return self._to_read(portfolio)
 
-    def get_all_portfolios(self, user_id: UUID) -> list[PortfolioRead]:
+    def get_all_portfolios(self, user_id: UUID, pagination: PaginationParams) -> PaginatedResult[PortfolioRead]:
         """
         Retrieves all portfolios for a specific user.
 
@@ -64,8 +64,16 @@ class PortfolioService:
             user_id (UUID): The ID of the user whose portfolios are to be retrieved. """
 
         portfolios = [self._to_read(portfolio) for portfolio in self.repository.get_all_portfolios(user_id)]
-        portfolios.sort(key=lambda p: p.created_at, reverse=True)
-        return portfolios
+        total = len(portfolios)
+        start = (pagination.page - 1) * pagination.page_size
+        end = start + pagination.page_size
+        page_items = portfolios[start:end]
+        return PaginatedResult(
+            items=page_items,
+            total=total,
+            page=pagination.page,
+            page_size=pagination.page_size,
+        )
     
     def get_portfolio(self, portfolio_id: UUID, user_id: UUID) -> PortfolioRead:
         """
@@ -102,16 +110,17 @@ class PortfolioService:
             stripped = patch["name"].strip()
             if not stripped:
                 raise InvalidPortfolioDataError("Portfolio name must contain non-whitespace text.")
-            normalized_name = self._normalize_name(stripped)
-            for portfolio in (self._to_read(p) for p in self.repository.get_all_portfolios(user_id)):
-                if (
-                    self._normalize_name(portfolio.name) == normalized_name
-                    and portfolio.user_id == user_id
-                    and portfolio.id != portfolio_id
-                ):
-                    raise PortfolioAlreadyExistsError("Portfolio name already exists for this user.")
 
-        self.repository.update_portfolio(portfolio_id, payload, user_id)
+            normalized_name = self._normalize_name(stripped)
+            if self.repository.exists_by_name(
+                normalized_name,
+                user_id,
+                exclude_id=portfolio_id,
+            ):
+                raise PortfolioAlreadyExistsError("Portfolio name already exists for this user.")
+        updated_portfolio = self.repository.update_portfolio(portfolio_id, payload, user_id)
+        self.repository.commit()
+        self.repository.refresh(updated_portfolio)
         return self.get_portfolio(portfolio_id, user_id)
     
     def delete_portfolio(self, portfolio_id: UUID, user_id: UUID) -> bool:
@@ -128,6 +137,7 @@ class PortfolioService:
         portfolio = self.repository.get_portfolio_by_id(portfolio_id, user_id)
         if portfolio and portfolio.user_id == user_id:
             self.repository.delete_portfolio(portfolio_id, user_id)
+            self.repository.commit()
             return True
         raise PortfolioNotFoundError(f"Portfolio with ID {portfolio_id} not found for user {user_id}")
 

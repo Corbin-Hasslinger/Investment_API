@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, Query
 from sqlmodel import Session
 
 from atlas_api.repositories.portfolio_repository import PortfolioRepository
@@ -12,10 +12,12 @@ from .core.db import get_session
 from .schemas.user import CurrentUserRead
 from .services.portfolio_service import PortfolioService
 from .services.stock_service import StockService
+from .tools import PaginationParams
 
 __all__ = [
     "CurrentUserDI",
     "FinnhubClientDI",
+    "PaginationParams",
     "PortfolioRepositoryDI",
     "PortfolioServiceDI",
     "SessionDI",
@@ -70,3 +72,11 @@ def get_portfolio_service(portfolio_repository: PortfolioRepositoryDI) -> Portfo
 
 type PortfolioServiceDI = Annotated[PortfolioService, Depends(get_portfolio_service)]
 
+def get_pagination_params(
+        page: Annotated[int, Query(ge=1)] =1,
+        page_size: Annotated[int, Query(ge=1, le=100)] = 25
+) -> PaginationParams:
+    """Dependency function to provide pagination parameters."""
+    return PaginationParams(page=page, page_size=page_size)
+
+type PaginationParamsDI = Annotated[PaginationParams, Depends(get_pagination_params)]

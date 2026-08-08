@@ -7,6 +7,7 @@ from atlas_api.schemas.portfolio import PortfolioRead
 from atlas_api.schemas.user import CurrentUserRead
 from atlas_api.services.portfolio_service import PortfolioService
 from atlas_api.tools.errors import PortfolioAlreadyExistsError, PortfolioNotFoundError
+from atlas_api.tools.pagination import PaginatedResult, PaginationParams
 
 
 def build_portfolio_read(
@@ -71,13 +72,26 @@ def test_get_portfolios_returns_200_and_list_shape(client, override_dependency) 
     service = override_portfolio_service(override_dependency)
     first = build_portfolio_read(user_id=current_user.id, name="Income", description="Dividend stocks")
     second = build_portfolio_read(user_id=current_user.id, name="Value", description=None)
-    service.get_all_portfolios.return_value = [first, second]
+    service.get_all_portfolios.return_value = PaginatedResult(
+        items=[first, second],
+        total=2,
+        page=1,
+        page_size=25,
+    )
 
     response = client.get("/portfolios")
 
     assert response.status_code == 200
-    assert response.json() == [portfolio_read_json(first), portfolio_read_json(second)]
-    service.get_all_portfolios.assert_called_once_with(current_user.id)
+    assert response.json() == {
+        "items": [portfolio_read_json(first), portfolio_read_json(second)],
+        "total": 2,
+        "page": 1,
+        "page_size": 25,
+    }
+    service.get_all_portfolios.assert_called_once()
+    called_user_id, called_pagination = service.get_all_portfolios.call_args.args
+    assert called_user_id == current_user.id
+    assert called_pagination == PaginationParams(page=1, page_size=25)
 
 
 def test_get_portfolio_returns_200_for_found(client, override_dependency) -> None:

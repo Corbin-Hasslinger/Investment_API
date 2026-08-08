@@ -21,7 +21,7 @@ class User(SQLModel, table=True):
     email: str = Field(
         sa_column=Column(
             "email", 
-            String, 
+            String(100),  # Assuming you want to limit the email to 100 characters
             unique=True, 
             nullable=False
             )
@@ -29,7 +29,7 @@ class User(SQLModel, table=True):
     hashed_password: str = Field(
         sa_column=Column(
             "hashed_password", 
-            String, 
+            String(200),  # Assuming you want to limit the hashed password to 200 characters
             nullable=False
             )
         )

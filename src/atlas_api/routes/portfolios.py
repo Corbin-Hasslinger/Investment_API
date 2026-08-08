@@ -4,8 +4,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from atlas_api.di import CurrentUserDI, PortfolioServiceDI
+from atlas_api.di import CurrentUserDI, PaginationParamsDI, PortfolioServiceDI
 from atlas_api.schemas.portfolio import PortfolioCreate, PortfolioRead, PortfolioUpdate
+from atlas_api.tools.pagination import PaginatedResult
 
 router = APIRouter(
     prefix="/portfolios",
@@ -28,16 +29,25 @@ def create_portfolio(
 
 @router.get(
     "",
-    response_model=list[PortfolioRead],
+    response_model=PaginatedResult[PortfolioRead],
     summary="Get all portfolios",
     status_code = status.HTTP_200_OK,
 )
 def get_all_portfolios(
     service: PortfolioServiceDI,
-    current_user: CurrentUserDI
-) -> list[PortfolioRead]:
-    """Retrieves all portfolios for the current user."""
-    return service.get_all_portfolios(current_user.id)
+    current_user: CurrentUserDI,
+    pagination: PaginationParamsDI,
+) -> PaginatedResult[PortfolioRead]:
+    """Retrieves all portfolios for the current user.
+    Supports pagination through query parameters.
+    Args:
+        service (PortfolioService): The portfolio service instance.
+        current_user (CurrentUserRead): The current authenticated user.
+        pagination (PaginationParams): Pagination parameters (page and page_size).
+    Returns:
+        PaginatedResult[PortfolioRead]: A paginated collection of portfolios for the current user.
+    """
+    return service.get_all_portfolios(current_user.id, pagination)
 
 @router.get("/{portfolio_id}",
     response_model=PortfolioRead,
