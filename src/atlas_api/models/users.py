@@ -34,19 +34,19 @@ class User(SQLModel, table=True):
             )
         )
     created_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(UTC),
         sa_column=Column(
             "created_at", 
             DateTime(timezone=True), 
             nullable=False,
-            default=lambda: datetime.datetime.now(UTC)
             )
         )
     updated_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(UTC),
         sa_column=Column(
             "updated_at", 
             DateTime(timezone=True), 
             nullable=False,
-            default=lambda: datetime.datetime.now(UTC),
             onupdate=lambda: datetime.datetime.now(UTC)
             )
         )
