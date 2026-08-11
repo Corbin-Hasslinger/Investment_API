@@ -4,13 +4,15 @@ from uuid import UUID
 from fastapi import Depends, Query
 from sqlmodel import Session
 
-from atlas_api.repositories.portfolio_repository import PortfolioRepository
-
 from .clients.finnhub_client import FinnhubClient
 from .core.config import Settings, get_settings
 from .core.db import get_session
+from .repositories.portfolio_repository import PortfolioRepository
+from .repositories.position_repository import PositionRepository
+from .repositories.security_repository import SecurityRepository
 from .schemas.user import CurrentUserRead
 from .services.portfolio_service import PortfolioService
+from .services.position_service import PositionService
 from .services.stock_service import StockService
 from .tools import PaginationParams
 
@@ -20,6 +22,9 @@ __all__ = [
     "PaginationParams",
     "PortfolioRepositoryDI",
     "PortfolioServiceDI",
+    "PositionRepositoryDI",
+    "PositionServiceDI",
+    "SecurityRepositoryDI",
     "SessionDI",
     "SettingsDI",
     "StockServiceDI",
@@ -59,7 +64,6 @@ type SessionDI = Annotated[Session, Depends(get_session)]
 
 def get_portfolio_repository(session: SessionDI):
     """Dependency function to provide a PortfolioRepository instance."""
-    from .repositories.portfolio_repository import PortfolioRepository
     return PortfolioRepository(session=session)
 
 type PortfolioRepositoryDI = Annotated[
@@ -71,6 +75,33 @@ def get_portfolio_service(portfolio_repository: PortfolioRepositoryDI) -> Portfo
     return PortfolioService(repository=portfolio_repository)
 
 type PortfolioServiceDI = Annotated[PortfolioService, Depends(get_portfolio_service)]
+
+def get_security_repository(session: SessionDI):
+    """Dependency function to provide a SecurityRepository instance."""
+    return SecurityRepository(session=session)
+
+type SecurityRepositoryDI = Annotated[
+    SecurityRepository, Depends(get_security_repository)
+]
+
+def get_position_repository(session: SessionDI):
+    """Dependency function to provide a PositionRepository instance."""
+    return PositionRepository(session=session)
+
+type PositionRepositoryDI = Annotated[
+    PositionRepository, Depends(get_position_repository)
+]
+
+def get_position_service(
+    position_repository: PositionRepositoryDI,
+    security_repository: SecurityRepositoryDI
+) -> PositionService:
+    """Dependency function to provide a PositionService instance."""
+    return PositionService(
+        position_repository=position_repository,
+        security_repository=security_repository
+    )
+type PositionServiceDI = Annotated[PositionService, Depends(get_position_service)]
 
 def get_pagination_params(
         page: Annotated[int, Query(ge=1)] =1,

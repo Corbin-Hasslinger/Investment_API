@@ -1,11 +1,26 @@
 
 class PortfolioNotFoundError(Exception):
     """Exception raised when a portfolio is not found."""
-    pass
 class PortfolioAlreadyExistsError(Exception):
     """Exception raised when a portfolio already exists."""
-    pass
 
 class InvalidPortfolioDataError(Exception):
     """Exception raised when the provided portfolio data is invalid."""
-    pass
+
+class PositionAlreadyExistsError(Exception):
+    """Exception raised when a position already exists."""
+
+class PositionNotFoundError(Exception):
+    """Exception raised when a position is not found."""
+
+class InvalidPositionDataError(Exception):
+    """Exception raised when the provided position data is invalid."""
+    
+class SecurityAlreadyExistsError(Exception):
+    """Exception raised when a security already exists."""
+
+class SecurityNotFoundError(Exception):
+    """Exception raised when a security is not found."""
+
+class InvalidSecurityDataError(Exception):
+    """Exception raised when the provided security data is invalid."""

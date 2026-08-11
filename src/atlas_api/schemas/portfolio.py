@@ -1,5 +1,5 @@
 
-import datetime
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,8 +14,8 @@ class PortfolioRead(PortfolioCreate):
     
     id: UUID
     user_id: UUID
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
+    created_at: datetime
+    updated_at: datetime
 
 class PortfolioUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)

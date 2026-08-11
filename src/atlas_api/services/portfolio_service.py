@@ -1,5 +1,4 @@
 import uuid
-from datetime import UTC, datetime
 from uuid import UUID
 
 from atlas_api.models.portfolios import Portfolio
@@ -16,9 +15,6 @@ from atlas_api.tools.pagination import PaginatedResult, PaginationParams
 class PortfolioService:
     def __init__(self, repository: PortfolioRepository):
         self.repository = repository
-    @staticmethod
-    def _now_utc() -> datetime:
-        return datetime.now(UTC)
 
     @staticmethod
     def _normalize_name(name: str) -> str:
@@ -111,7 +107,7 @@ class PortfolioService:
             if not stripped:
                 raise InvalidPortfolioDataError("Portfolio name must contain non-whitespace text.")
 
-            normalized_name = self._normalize_name(stripped)
+            normalized_name = self._normalize_name(patch["name"])
             if self.repository.exists_by_name(
                 normalized_name,
                 user_id,

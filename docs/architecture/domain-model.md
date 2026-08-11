@@ -43,6 +43,41 @@ Manages the investment portfolios created by users and the positions held within
 - Store shares owned and average cost basis
 - Preserve portfolio information between sessions
 
+### Lifecycle rules
+
+- Deleting a portfolio cascades to its positions.
+- Positions are owned by the portfolio that contains them.
+- Security records are shared reference objects and are not treated as portfolio-owned state.
+- Service-layer logic should coordinate any security removal flow so positions do not become invalid or ambiguous.
+
+## Milestone 2A — Security foundation
+
+Defines the stable identity and reference data for a financial instrument.
+
+### Responsibilities
+
+- Security represents the canonical identity of a financial instrument.
+- Atlas stores the stable reference fields for a security: symbol, name, exchange, and currency.
+- Security is shared across portfolios and positions rather than duplicated inside each position.
+- Security does not store current market price or other frequently changing market data.
+
+## Milestone 2B — Position management
+
+Represents an aggregate holding owned by a user within a specific portfolio.
+
+### Responsibilities
+
+- Position represents a manually maintained holding inside one portfolio.
+- Position links one portfolio to one security and stores shares and average cost.
+- Position is not derived from transaction history in the MVP.
+- A portfolio can contain at most one position for the same security.
+
+### Lifecycle rules
+
+- A position is deleted when its parent portfolio is deleted.
+- A position remains valid only while its referenced security exists, and any security deletion flow should be handled by the service layer.
+- Security deletion should not silently leave positions pointing at an invalid or ambiguous reference.
+
 ## Market Data
 
 Provides factual information about supported securities and companies.

@@ -8,8 +8,14 @@ from atlas_api.routes import API_ROUTERS
 
 from .tools.errors import (
     InvalidPortfolioDataError,
+    InvalidPositionDataError,
+    InvalidSecurityDataError,
     PortfolioAlreadyExistsError,
     PortfolioNotFoundError,
+    PositionAlreadyExistsError,
+    PositionNotFoundError,
+    SecurityAlreadyExistsError,
+    SecurityNotFoundError,
 )
 
 
@@ -54,6 +60,42 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": {"code": "invalid_portfolio_data", "message": str(exc) or "Invalid portfolio data"}},
+        )
+    @app.exception_handler(SecurityAlreadyExistsError)
+    async def handle_security_already_exists_error(_: Request, exc: SecurityAlreadyExistsError):
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={"error": {"code": "security_already_exists", "message": str(exc) or "Security already exists"}},
+        )
+    @app.exception_handler(SecurityNotFoundError)
+    async def handle_security_not_found_error(_: Request, exc: SecurityNotFoundError):
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": {"code": "security_not_found", "message": str(exc) or "Security not found"}},
+        )
+    @app.exception_handler(InvalidSecurityDataError)
+    async def handle_invalid_security_data_error(_: Request, exc: InvalidSecurityDataError):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": {"code": "invalid_security_data", "message": str(exc) or "Invalid security data"}},
+        )
+    @app.exception_handler(PositionAlreadyExistsError)
+    async def handle_position_already_exists_error(_: Request, exc: PositionAlreadyExistsError):
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={"error": {"code": "position_already_exists", "message": str(exc) or "Position already exists"}},
+        )
+    @app.exception_handler(PositionNotFoundError)
+    async def handle_position_not_found_error(_: Request, exc: PositionNotFoundError):
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": {"code": "position_not_found", "message": str(exc) or "Position not found"}},
+        )
+    @app.exception_handler(InvalidPositionDataError)
+    async def handle_invalid_position_data_error(_: Request, exc: InvalidPositionDataError):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": {"code": "invalid_position_data", "message": str(exc) or "Invalid position data"}},
         )
 
 def register_lifecycle_hooks(app: FastAPI) -> None:

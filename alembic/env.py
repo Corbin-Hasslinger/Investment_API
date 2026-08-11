@@ -5,7 +5,7 @@ from sqlmodel import SQLModel
 
 from alembic import context
 from atlas_api.core.config import Settings, get_settings
-from atlas_api.models import Portfolio, User
+from atlas_api.models import Portfolio, Position, Security, User
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

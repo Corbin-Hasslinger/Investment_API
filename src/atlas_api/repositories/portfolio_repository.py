@@ -42,8 +42,6 @@ class PortfolioRepository:
         ).all()
     def update_portfolio(self, portfolio_id: UUID, payload: PortfolioUpdate, user_id: UUID) -> Portfolio:
         portfolio = self.get_portfolio_by_id(portfolio_id, user_id)
-        if payload.name is not None and payload.name.strip() != "":
-            payload.name = payload.name.strip()
         for key, value in payload.model_dump(exclude_unset=True).items():
             setattr(portfolio, key, value)
         if portfolio:
@@ -58,14 +56,10 @@ class PortfolioRepository:
             self.session.flush()
     def exists_by_name(self, name: str, user_id: UUID, exclude_id: UUID | None = None) -> bool:
         stmt = select(Portfolio).where(
-            func.lower(Portfolio.name) == name,
+            func.lower(Portfolio.name) == name.lower(),
             Portfolio.user_id == user_id,
         )
         if exclude_id is not None:
             stmt = stmt.where(Portfolio.id != exclude_id)
 
         return self.session.exec(stmt).first() is not None
-
-        
-
-

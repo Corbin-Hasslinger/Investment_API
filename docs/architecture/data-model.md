@@ -47,27 +47,24 @@ Represents a named collection of investment positions owned by a user.
 - A portfolio cannot exist without an owner.
 - Deleting a portfolio also removes its positions.
 
+### Lifecycle behavior
+
+- Portfolio deletion cascades to its positions.
+- Positions are considered child records of the portfolio.
+
 ## Security
 
-Represents a supported financial security that has been validated by Atlas.
+Represents the stable identity and reference data for a supported financial security.
 
 ### Fields
 
 - `id`
-- `ticker`
+- `symbol`
 - `name`
-- `security_type`
 - `exchange`
 - `currency`
-- `is_active`
-- `last_verified_at`
 - `created_at`
 - `updated_at`
-
-### Security Types
-
-- Equity
-- Exchange-Traded Fund
 
 ### Relationships
 
@@ -75,9 +72,14 @@ Represents a supported financial security that has been validated by Atlas.
 
 ### Constraints
 
-- Ticker symbols must be normalized before storage.
-- Each ticker must be unique within the security catalog.
-- Only supported security types can be added to a portfolio.
+- Symbols must be normalized before storage.
+- Each symbol must be unique within the security catalog.
+- Security stores reference data only; it does not store current market price.
+
+### Lifecycle behavior
+
+- Security is a shared reference entity and is not owned by a single portfolio.
+- Security deletion should be coordinated by the service layer so positions referencing that security remain consistent.
 
 ## Position
 
@@ -104,6 +106,18 @@ Represents a user's aggregated ownership of a security within a portfolio.
 - Shares must be greater than zero.
 - Average cost must be greater than or equal to zero.
 - Deleting a position does not delete the referenced security.
+
+### Lifecycle behavior
+
+- A position is a child of its portfolio and is removed when the parent portfolio is deleted.
+- A position references a security, but the security itself is not deleted as a side effect of deleting the position.
+- Any security removal flow must be handled explicitly by the service layer so positions remain valid and unambiguous.
+
+### Responsibility boundary
+
+- Security stores reference data for the instrument.
+- Position stores portfolio-specific holdings for that instrument.
+- Position is manually maintained in the MVP and is not derived from transaction history.
 
 ## Market Quote Snapshot
 Represents current market information retrieved for a security at a specific time.
