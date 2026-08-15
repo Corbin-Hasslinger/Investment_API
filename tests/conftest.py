@@ -10,6 +10,8 @@ from sqlmodel import Session, SQLModel, create_engine, delete
 from atlas_api.core.config import Settings, get_settings
 from atlas_api.main import create_app
 from atlas_api.models.portfolios import Portfolio
+from atlas_api.models.positions import Position
+from atlas_api.models.securities import Security
 from atlas_api.models.users import User
 
 
@@ -43,6 +45,8 @@ def engine(settings: Settings):
 @pytest.fixture
 def session(engine) -> Iterator[Session]:
     with Session(engine) as session:
+            session.exec(delete(Position))
+            session.exec(delete(Security))
             session.exec(delete(Portfolio))
             session.exec(delete(User))
             session.commit()
@@ -55,7 +59,22 @@ def user(session) -> User:
     session.commit()
     session.refresh(user)
     return user
-    
+
+@pytest.fixture
+def portfolio(session, user) -> Portfolio:
+    portfolio = Portfolio(user_id=user.id, name="Demo Portfolio", description="Test portfolio")
+    session.add(portfolio)
+    session.commit()
+    session.refresh(portfolio)
+    return portfolio
+
+@pytest.fixture
+def security(session) -> Security:
+    security = Security(symbol="AAPL", name="Apple Inc", exchange="NASDAQ", currency="USD")
+    session.add(security)
+    session.commit()
+    session.refresh(security)
+    return security
 
 @pytest.fixture
 def override_dependency(app: FastAPI) -> Iterator[Callable[[Callable[..., Any], Callable[..., Any]], None]]:

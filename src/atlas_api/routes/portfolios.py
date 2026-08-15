@@ -9,7 +9,7 @@ from atlas_api.schemas.portfolio import PortfolioCreate, PortfolioRead, Portfoli
 from atlas_api.tools.pagination import PaginatedResult
 
 router = APIRouter(
-    prefix="/portfolios",
+    prefix="//portfolios",
     tags=["Portfolios"],
 )
 
