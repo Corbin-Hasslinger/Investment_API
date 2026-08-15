@@ -6,7 +6,11 @@ from uuid import UUID, uuid4
 from atlas_api.di import get_position_service
 from atlas_api.schemas.position import PositionRead
 from atlas_api.services.position_service import PositionService
-from atlas_api.tools.errors import PositionAlreadyExistsError, PositionNotFoundError, SecurityNotFoundError
+from atlas_api.tools.errors import (
+    PositionAlreadyExistsError,
+    PositionNotFoundError,
+    SecurityNotFoundError,
+)
 from atlas_api.tools.pagination import PaginatedResult, PaginationParams
 
 
@@ -43,6 +47,7 @@ def override_position_service(override_dependency):
 def test_post_positions_returns_201_and_response_body_shape(client, override_dependency) -> None:
     portfolio_id = uuid4()
     security_id = uuid4()
+    current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     created = build_position_read(
         position_id=uuid4(),
@@ -59,15 +64,17 @@ def test_post_positions_returns_201_and_response_body_shape(client, override_dep
 
     assert response.status_code == 201
     assert response.json() == position_read_json(created)
-    payload, called_portfolio_id = service.create_position.call_args.args
+    payload, called_portfolio_id, called_user_id = service.create_position.call_args.args
     assert payload.security_id == security_id
     assert payload.shares == Decimal("25.50")
     assert payload.average_cost == Decimal("110.00")
     assert called_portfolio_id == portfolio_id
+    assert called_user_id == current_user_id
 
 
 def test_get_positions_returns_200_and_list_shape(client, override_dependency) -> None:
     portfolio_id = uuid4()
+    current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     first = build_position_read(
         position_id=uuid4(),
@@ -97,13 +104,18 @@ def test_get_positions_returns_200_and_list_shape(client, override_dependency) -
         "page": 1,
         "page_size": 25,
     }
-    service.get_all_positions.assert_called_once_with(portfolio_id, PaginationParams(page=1, page_size=25))
+    service.get_all_positions.assert_called_once_with(
+        portfolio_id,
+        current_user_id,
+        PaginationParams(page=1, page_size=25),
+    )
 
 
 def test_get_position_returns_200_for_found(client, override_dependency) -> None:
     portfolio_id = uuid4()
     position_id = uuid4()
     security_id = uuid4()
+    current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     position = build_position_read(
         position_id=position_id,
@@ -117,12 +129,13 @@ def test_get_position_returns_200_for_found(client, override_dependency) -> None
 
     assert response.status_code == 200
     assert response.json() == position_read_json(position)
-    service.get_position.assert_called_once_with(position_id, portfolio_id)
+    service.get_position.assert_called_once_with(position_id, portfolio_id, current_user_id)
 
 
 def test_get_position_returns_404_for_missing(client, override_dependency) -> None:
     portfolio_id = uuid4()
     position_id = uuid4()
+    current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     service.get_position.side_effect = PositionNotFoundError("Position missing")
 
@@ -135,13 +148,14 @@ def test_get_position_returns_404_for_missing(client, override_dependency) -> No
             "message": "Position missing",
         }
     }
-    service.get_position.assert_called_once_with(position_id, portfolio_id)
+    service.get_position.assert_called_once_with(position_id, portfolio_id, current_user_id)
 
 
 def test_patch_position_returns_200_and_updated_payload(client, override_dependency) -> None:
     portfolio_id = uuid4()
     position_id = uuid4()
     security_id = uuid4()
+    current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     updated = build_position_read(
         position_id=position_id,
@@ -158,9 +172,10 @@ def test_patch_position_returns_200_and_updated_payload(client, override_depende
 
     assert response.status_code == 200
     assert response.json() == position_read_json(updated)
-    called_position_id, called_portfolio_id, payload = service.update_position.call_args.args
+    called_position_id, called_portfolio_id, called_user_id, payload = service.update_position.call_args.args
     assert called_position_id == position_id
     assert called_portfolio_id == portfolio_id
+    assert called_user_id == current_user_id
     assert payload.shares == Decimal("18.00")
     assert payload.average_cost == Decimal("85.00")
 
@@ -168,6 +183,7 @@ def test_patch_position_returns_200_and_updated_payload(client, override_depende
 def test_delete_position_returns_204_with_no_body(client, override_dependency) -> None:
     portfolio_id = uuid4()
     position_id = uuid4()
+    current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     service.delete_position.return_value = True
 
@@ -175,7 +191,7 @@ def test_delete_position_returns_204_with_no_body(client, override_dependency) -
 
     assert response.status_code == 204
     assert response.content == b""
-    service.delete_position.assert_called_once_with(position_id, portfolio_id)
+    service.delete_position.assert_called_once_with(position_id, portfolio_id, current_user_id)
 
 
 def test_post_positions_returns_404_for_missing_security(client, override_dependency) -> None:
@@ -201,6 +217,7 @@ def test_post_positions_returns_404_for_missing_security(client, override_depend
 def test_get_position_returns_404_for_portfolio_ownership_mismatch(client, override_dependency) -> None:
     portfolio_id = uuid4()
     position_id = uuid4()
+    current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     service.get_position.side_effect = PositionNotFoundError("Position not found for this portfolio")
 
@@ -213,7 +230,7 @@ def test_get_position_returns_404_for_portfolio_ownership_mismatch(client, overr
             "message": "Position not found for this portfolio",
         }
     }
-    service.get_position.assert_called_once_with(position_id, portfolio_id)
+    service.get_position.assert_called_once_with(position_id, portfolio_id, current_user_id)
 
 
 def test_post_positions_returns_409_for_duplicate_position(client, override_dependency) -> None:

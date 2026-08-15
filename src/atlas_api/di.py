@@ -94,13 +94,16 @@ type PositionRepositoryDI = Annotated[
 
 def get_position_service(
     position_repository: PositionRepositoryDI,
-    security_repository: SecurityRepositoryDI
+    security_repository: SecurityRepositoryDI,
+    portfolio_repository: PortfolioRepositoryDI,
 ) -> PositionService:
     """Dependency function to provide a PositionService instance."""
     return PositionService(
         position_repository=position_repository,
-        security_repository=security_repository
+        security_repository=security_repository,
+        portfolio_repository=portfolio_repository,
     )
+
 type PositionServiceDI = Annotated[PositionService, Depends(get_position_service)]
 
 def get_pagination_params(

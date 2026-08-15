@@ -10,9 +10,10 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Numeric,
     UniqueConstraint,
 )
-from sqlmodel import Field, Float, SQLModel
+from sqlmodel import Field, SQLModel
 
 
 class Position(
@@ -51,8 +52,8 @@ class Position(
     shares: Decimal = Field(
                 sa_column=Column(
                     "shares",
-                    Float,
-                    CheckConstraint("shares > 0", name="ck_shares_non_negative"),
+                    Numeric(precision=18, scale=6),
+                    CheckConstraint("shares > 0", name="ck_position_shares_positive"),
                     nullable=False,
                 )
         )
@@ -60,8 +61,8 @@ class Position(
                 ge=0.0,
                 sa_column=Column(
                     "avg_cost",
-                    Float,
-                    CheckConstraint("avg_cost >= 0", name="ck_avg_cost_non_negative"),
+                    Numeric(precision=18, scale=6),
+                    CheckConstraint("avg_cost >= 0", name="ck_position_avg_cost_non_negative"),
                     nullable=False,
                 )
         )

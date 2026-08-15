@@ -5,12 +5,15 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from atlas_api.models.portfolios import Portfolio
 from atlas_api.models.positions import Position
+from atlas_api.repositories.portfolio_repository import PortfolioRepository
 from atlas_api.repositories.position_repository import PositionRepository
 from atlas_api.repositories.security_repository import SecurityRepository
 from atlas_api.schemas.position import PositionCreate, PositionRead, PositionUpdate
 from atlas_api.services.position_service import PositionService
 from atlas_api.tools.errors import (
+    PortfolioNotFoundError,
     PositionAlreadyExistsError,
     PositionNotFoundError,
     SecurityNotFoundError,
@@ -53,10 +56,20 @@ def security_repository() -> MagicMock:
 
 
 @pytest.fixture
-def service(repository: MagicMock, security_repository: MagicMock) -> PositionService:
+def portfolio_repository() -> MagicMock:
+    return MagicMock(spec=PortfolioRepository)
+
+
+@pytest.fixture
+def service(
+    repository: MagicMock,
+    security_repository: MagicMock,
+    portfolio_repository: MagicMock,
+) -> PositionService:
     return PositionService(
         position_repository=repository,
         security_repository=security_repository,
+        portfolio_repository=portfolio_repository,
     )
 
 
@@ -77,9 +90,17 @@ def test_create_position_returns_position_read_for_valid_payload(
     )
     repository.create_position.return_value = stored
 
+    user_id = uuid4()
+    service.portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
+        id=portfolio_id,
+        user_id=user_id,
+        name="Test Portfolio",
+    )
+
     result = service.create_position(
         PositionCreate(security_id=security_id, shares=Decimal("25.50"), average_cost=Decimal("110.00")),
         portfolio_id,
+        user_id,
     )
 
     assert isinstance(result, PositionRead)
@@ -102,15 +123,46 @@ def test_create_position_rejects_missing_security(
     service: PositionService,
     repository: MagicMock,
     security_repository: MagicMock,
+    portfolio_repository: MagicMock,
 ) -> None:
     portfolio_id = uuid4()
     security_id = uuid4()
+    user_id = uuid4()
     security_repository.get_security_by_id.return_value = None
+    portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
+        id=portfolio_id,
+        user_id=user_id,
+        name="Test Portfolio",
+    )
 
     with pytest.raises(SecurityNotFoundError):
         service.create_position(
             PositionCreate(security_id=security_id, shares=Decimal("5"), average_cost=Decimal("100")),
             portfolio_id,
+            user_id,
+        )
+
+    repository.create_position.assert_not_called()
+    repository.commit.assert_not_called()
+
+
+def test_create_position_rejects_portfolio_not_owned_by_user(
+    service: PositionService,
+    repository: MagicMock,
+    security_repository: MagicMock,
+    portfolio_repository: MagicMock,
+) -> None:
+    portfolio_id = uuid4()
+    security_id = uuid4()
+    user_id = uuid4()
+    security_repository.get_security_by_id.return_value = object()
+    portfolio_repository.get_portfolio_by_id.return_value = None
+
+    with pytest.raises(PortfolioNotFoundError):
+        service.create_position(
+            PositionCreate(security_id=security_id, shares=Decimal("5"), average_cost=Decimal("100")),
+            portfolio_id,
+            user_id,
         )
 
     repository.create_position.assert_not_called()
@@ -121,16 +173,24 @@ def test_create_position_rejects_duplicate_portfolio_security_pair(
     service: PositionService,
     repository: MagicMock,
     security_repository: MagicMock,
+    portfolio_repository: MagicMock,
 ) -> None:
     portfolio_id = uuid4()
     security_id = uuid4()
+    user_id = uuid4()
     security_repository.get_security_by_id.return_value = object()
+    portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
+        id=portfolio_id,
+        user_id=user_id,
+        name="Test Portfolio",
+    )
     repository.exists_by_portfolio_and_security.return_value = True
 
     with pytest.raises(PositionAlreadyExistsError):
         service.create_position(
             PositionCreate(security_id=security_id, shares=Decimal("4"), average_cost=Decimal("90")),
             portfolio_id,
+            user_id,
         )
 
     repository.create_position.assert_not_called()
@@ -165,7 +225,14 @@ def test_get_all_positions_maps_repository_models_to_read_schemas(
         ),
     ]
 
-    result = service.get_all_positions(portfolio_id, PaginationParams(page=1, page_size=25))
+    user_id = uuid4()
+    service.portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
+        id=portfolio_id,
+        user_id=user_id,
+        name="Test Portfolio",
+    )
+
+    result = service.get_all_positions(portfolio_id, user_id, PaginationParams(page=1, page_size=25))
 
     assert [type(item) for item in result.items] == [PositionRead, PositionRead]
     assert result.total == 2
@@ -178,10 +245,17 @@ def test_get_position_raises_not_found_when_repository_returns_none(
     service: PositionService,
     repository: MagicMock,
 ) -> None:
+    portfolio_id = uuid4()
+    user_id = uuid4()
+    service.portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
+        id=portfolio_id,
+        user_id=user_id,
+        name="Test Portfolio",
+    )
     repository.get_position_by_id.return_value = None
 
     with pytest.raises(PositionNotFoundError):
-        service.get_position(uuid4(), uuid4())
+        service.get_position(uuid4(), portfolio_id, user_id)
 
 
 def test_update_position_updates_only_provided_fields(
@@ -209,9 +283,17 @@ def test_update_position_updates_only_provided_fields(
     repository.get_position_by_id.return_value = existing
     repository.update_position.return_value = updated
 
+    user_id = uuid4()
+    service.portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
+        id=portfolio_id,
+        user_id=user_id,
+        name="Test Portfolio",
+    )
+
     result = service.update_position(
         position_id,
         portfolio_id,
+        user_id,
         PositionUpdate(shares=Decimal("15.50")),
     )
 
@@ -235,7 +317,14 @@ def test_delete_position_returns_true_when_position_exists(
         security_id=uuid4(),
     )
 
-    assert service.delete_position(position_id, portfolio_id) is True
+    user_id = uuid4()
+    service.portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
+        id=portfolio_id,
+        user_id=user_id,
+        name="Test Portfolio",
+    )
+
+    assert service.delete_position(position_id, portfolio_id, user_id) is True
     repository.delete_position.assert_called_once_with(position_id, portfolio_id)
     repository.commit.assert_called_once()
 
@@ -244,9 +333,16 @@ def test_delete_position_raises_not_found_when_position_missing(
     service: PositionService,
     repository: MagicMock,
 ) -> None:
+    portfolio_id = uuid4()
+    user_id = uuid4()
+    service.portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
+        id=portfolio_id,
+        user_id=user_id,
+        name="Test Portfolio",
+    )
     repository.get_position_by_id.return_value = None
 
     with pytest.raises(PositionNotFoundError):
-        service.delete_position(uuid4(), uuid4())
+        service.delete_position(uuid4(), portfolio_id, user_id)
 
     repository.delete_position.assert_not_called()

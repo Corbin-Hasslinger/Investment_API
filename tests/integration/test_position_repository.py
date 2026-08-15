@@ -1,7 +1,6 @@
 from decimal import Decimal
 from uuid import uuid4
 
-import pytest
 from sqlalchemy.exc import IntegrityError
 
 from atlas_api.models.portfolios import Portfolio

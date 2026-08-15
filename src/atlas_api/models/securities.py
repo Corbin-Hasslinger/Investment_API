@@ -21,20 +21,19 @@ class Security(SQLModel,
     symbol: str = Field(
                 min_length=1,
                 sa_column=Column(
-                    "ticker", 
+                    "ticker",
                     String(5),
                     nullable=False,
-                    unique=True
-                    )
+                    unique=True,
+                )
             )
     name: str = Field(
                 min_length=1,
                 sa_column=Column(
-                    "name", 
+                    "name",
                     String(100),
                     nullable=False,
-                    unique=True
-                    )
+                )
             )
     exchange: str = Field(
                 min_length=1,
