@@ -3,7 +3,6 @@
 from atlas_api.clients.finnhub_client import FinnhubClient
 from atlas_api.schemas.stock import StockQuote
 from atlas_api.services.security_service import SecurityService
-from atlas_api.tools.errors import UnsupportedSymbolError
 
 
 class MarketDataService:
@@ -44,13 +43,8 @@ class MarketDataService:
             UpstreamUnavailableError: Finnhub service unavailable
         """
         normalized_symbol = self.security_service.normalize_symbol(symbol)
-        if not await self.finnhub_client.is_valid_symbol(normalized_symbol):
-            raise UnsupportedSymbolError(
-                f"Symbol '{normalized_symbol}' is not supported by Finnhub."
-            )
-         
+        
         quote_data = await self.finnhub_client.get_quote(normalized_symbol)
-
         return StockQuote(
             symbol=normalized_symbol,
             current_price=quote_data["c"],

@@ -18,7 +18,6 @@ def test_get_quote_uses_real_security_repository_and_mocked_finnhub(
 ) -> None:
     """The quote route composes real DB-backed services with a mocked upstream."""
     finnhub_client = MagicMock(spec=FinnhubClient)
-    finnhub_client.is_valid_symbol = AsyncMock(return_value=True)
     finnhub_client.get_quote = AsyncMock(
         return_value={
             "c": 150.25,
@@ -52,7 +51,6 @@ def test_get_quote_uses_real_security_repository_and_mocked_finnhub(
         "previous_close_price": 147.75,
         "timestamp": 1692374400,
     }
-    finnhub_client.is_valid_symbol.assert_awaited_once_with("AAPL")
     finnhub_client.get_quote.assert_awaited_once_with("AAPL")
 
 
@@ -65,7 +63,7 @@ def test_post_position_resolves_security_and_persists_position(
 ) -> None:
     """POST positions composes ownership, security resolution, and persistence."""
     finnhub_client = MagicMock(spec=FinnhubClient)
-    finnhub_client.is_valid_symbol = AsyncMock(
+    finnhub_client.symbol_lookup = AsyncMock(
         return_value={
             "name": "Apple Inc.",
             "exchange": "NASDAQ",
@@ -110,4 +108,4 @@ def test_post_position_resolves_security_and_persists_position(
     assert created_security.currency == "USD"
     assert created_position.shares == 10.5
     assert created_position.average_cost == 150.25
-    finnhub_client.is_valid_symbol.assert_awaited_once_with("AAPL")
+    finnhub_client.symbol_lookup.assert_awaited_once_with("AAPL")

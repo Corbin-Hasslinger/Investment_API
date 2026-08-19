@@ -49,8 +49,8 @@ class FinnhubClient:
 
         return response.json()
 
-    async def is_valid_symbol(self, symbol: str) -> dict[str, Any]:
-        """ Checks if the given ticker symbol is valid by querying Finnhub's profile2 endpoint."""
+    async def symbol_lookup(self, symbol: str) -> dict[str, Any]:
+        """ Looks up information about the given ticker symbol by querying Finnhub's profile2 endpoint."""
         url = f"{self.BASE_URL}/stock/profile2"
         params = {
             "symbol": symbol,

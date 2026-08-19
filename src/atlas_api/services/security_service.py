@@ -62,12 +62,16 @@ class SecurityService:
         if security:
             return self._to_read(security)
         
-        # Check the upstream API before creating a new record.
-        security_info = await self.finnhub_client.is_valid_symbol(normalized)
-
+        security_info = await self.finnhub_client.symbol_lookup(normalized)
         if not security_info:
             raise UnsupportedSymbolError(
                 f"Symbol '{normalized}' is not supported by Finnhub."
+            )
+                 
+        required_fields = ("name", "exchange", "currency")
+        if any(not security_info.get(field) for field in required_fields):
+            raise UnsupportedSymbolError(
+                f"Finnhub returned incomplete profile data for '{normalized}'."
             )
 
         security = self.security_repository.create_security(

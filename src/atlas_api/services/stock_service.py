@@ -40,5 +40,5 @@ class StockService:
     async def validate_ticker_symbol(self, symbol: str) -> dict[str, Any]:
         """Validates a given ticker symbol by checking if it exists in the Finnhub API."""
         symbol = self.security_service.normalize_symbol(symbol)
-        is_valid = await self.finnhub_client.is_valid_symbol(symbol)
-        return {"is_valid": is_valid}
+        profile = await self.finnhub_client.symbol_lookup(symbol)
+        return {"is_valid": profile}

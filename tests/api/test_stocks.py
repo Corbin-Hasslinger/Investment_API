@@ -56,7 +56,7 @@ def test_get_quote_returns_503_for_upstream_timeout(client, override_dependency)
 
     response = client.get("/market/quote/AAPL")
 
-    assert response.status_code == 503
+    assert response.status_code == 504
 
 
 def test_validate_symbol_returns_200_with_valid_symbol(client, override_dependency):

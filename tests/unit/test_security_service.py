@@ -102,7 +102,7 @@ class TestResolveSecurityWithMocks:
         """When Security missing but valid upstream, create and return it."""
         security_repository.get_security_by_symbol.return_value = None
         # Mock successful Finnhub response
-        finnhub_client.is_valid_symbol = AsyncMock(return_value={
+        finnhub_client.symbol_lookup = AsyncMock(return_value={
             "name": "Microsoft Corporation",
             "exchange": "NASDAQ",
             "currency": "USD",
@@ -131,7 +131,7 @@ class TestResolveSecurityWithMocks:
     ):
         """When Security missing and invalid upstream, raise UnsupportedSymbolError."""
         security_repository.get_security_by_symbol.return_value = None
-        finnhub_client.is_valid_symbol = AsyncMock(side_effect=UnsupportedSymbolError(
+        finnhub_client.symbol_lookup = AsyncMock(side_effect=UnsupportedSymbolError(
             "FAKEZZ not found on Finnhub"
         ))
 
