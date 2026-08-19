@@ -5,13 +5,12 @@ from uuid import UUID
 from atlas_api.models.positions import Position
 from atlas_api.repositories.portfolio_repository import PortfolioRepository
 from atlas_api.repositories.position_repository import PositionRepository
-from atlas_api.repositories.security_repository import SecurityRepository
 from atlas_api.schemas.position import PositionCreate, PositionRead, PositionUpdate
+from atlas_api.services.security_service import SecurityService
 from atlas_api.tools.errors import (
     PortfolioNotFoundError,
     PositionAlreadyExistsError,
     PositionNotFoundError,
-    SecurityNotFoundError,
 )
 from atlas_api.tools.pagination import PaginatedResult, PaginationParams
 
@@ -20,12 +19,12 @@ class PositionService:
     def __init__(
         self,
         position_repository: PositionRepository,
-        security_repository: SecurityRepository,
         portfolio_repository: PortfolioRepository,
+        security_service: SecurityService,
     ):
         self.position_repository = position_repository
-        self.security_repository = security_repository
         self.portfolio_repository = portfolio_repository
+        self.security_service = security_service
 
     def _to_read(self, model: Position) -> PositionRead:
         return PositionRead.model_validate(model, from_attributes=True)
@@ -37,15 +36,13 @@ class PositionService:
                 f"Portfolio with ID {portfolio_id} not found for user {user_id}"
             )
 
-    def create_position(self, payload: PositionCreate, portfolio_id: UUID, user_id: UUID) -> PositionRead:
+    async def create_position(self, payload: PositionCreate, portfolio_id: UUID, user_id: UUID) -> PositionRead:
         """Creates a new position for a portfolio owned by the current user."""
         self._ensure_portfolio_owned_by_user(portfolio_id, user_id)
-
-        if not self.security_repository.get_security_by_id(payload.security_id):
-            raise SecurityNotFoundError(f"Security with ID {payload.security_id} does not exist")
-        if self.position_repository.exists_by_portfolio_and_security(payload.security_id, portfolio_id):
+        security = await self.security_service.resolve_security(payload.symbol)
+        if self.position_repository.exists_by_portfolio_and_security(security.symbol, portfolio_id):
             raise PositionAlreadyExistsError(
-                f"Position with security ID {payload.security_id} and portfolio_id {portfolio_id} already exists"
+                f"Position with symbol {security.symbol} and portfolio_id {portfolio_id} already exists"
             )
 
         position_id = uuid.uuid4()
@@ -53,7 +50,7 @@ class PositionService:
             Position(
                 id=position_id,
                 portfolio_id=portfolio_id,
-                security_id=payload.security_id,
+                symbol=security.symbol,
                 shares=payload.shares,
                 average_cost=payload.average_cost,
             )

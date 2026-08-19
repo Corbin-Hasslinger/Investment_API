@@ -19,13 +19,12 @@ def make_security(symbol: str) -> Security:
         currency="USD",
     )
 
-
 def test_create_and_fetch_by_id_and_portfolio_id(session, portfolio, security) -> None:
     repository = PositionRepository(session)
     position = repository.create_position(
         Position(
             portfolio_id=portfolio.id,
-            security_id=security.id,
+            symbol=security.symbol,
             shares=Decimal("12.50"),
             average_cost=Decimal("101.25"),
         )
@@ -35,13 +34,13 @@ def test_create_and_fetch_by_id_and_portfolio_id(session, portfolio, security) -
 
     assert position.id is not None
     assert position.portfolio_id == portfolio.id
-    assert position.security_id == security.id
+    assert position.symbol == security.symbol
     assert position.shares == Decimal("12.50")
     assert position.average_cost == Decimal("101.25")
     assert fetched is not None
     assert fetched.id == position.id
     assert fetched.portfolio_id == portfolio.id
-    assert fetched.security_id == security.id
+    assert fetched.symbol == security.symbol
 
 
 def test_get_by_id_returns_none_for_wrong_portfolio_id(session, portfolio, security) -> None:
@@ -49,7 +48,7 @@ def test_get_by_id_returns_none_for_wrong_portfolio_id(session, portfolio, secur
     position = repository.create_position(
         Position(
             portfolio_id=portfolio.id,
-            security_id=security.id,
+            symbol=security.symbol,
             shares=Decimal("5.00"),
             average_cost=Decimal("90.00"),
         )
@@ -75,7 +74,7 @@ def test_list_returns_only_positions_for_selected_portfolio(session, user, secur
     repository.create_position(
         Position(
             portfolio_id=other_portfolio.id,
-            security_id=security.id,
+            symbol=security.symbol,
             shares=Decimal("30.00"),
             average_cost=Decimal("120.00"),
         )
@@ -83,7 +82,7 @@ def test_list_returns_only_positions_for_selected_portfolio(session, user, secur
     position_in_target = repository.create_position(
         Position(
             portfolio_id=target_portfolio.id,
-            security_id=security.id,
+            symbol=security.symbol,
             shares=Decimal("20.00"),
             average_cost=Decimal("110.00"),
         )
@@ -100,7 +99,7 @@ def test_update_persists_changed_shares_and_average_cost(session, portfolio, sec
     position = repository.create_position(
         Position(
             portfolio_id=portfolio.id,
-            security_id=security.id,
+            symbol=security.symbol,
             shares=Decimal("8.00"),
             average_cost=Decimal("50.00"),
         )
@@ -128,7 +127,7 @@ def test_delete_removes_row(session, portfolio, security) -> None:
     position = repository.create_position(
         Position(
             portfolio_id=portfolio.id,
-            security_id=security.id,
+            symbol=security.symbol,
             shares=Decimal("9.00"),
             average_cost=Decimal("80.00"),
         )
@@ -144,7 +143,7 @@ def test_same_portfolio_and_security_duplicate_is_rejected(session, portfolio, s
     repository.create_position(
         Position(
             portfolio_id=portfolio.id,
-            security_id=security.id,
+            symbol=security.symbol,
             shares=Decimal("3.00"),
             average_cost=Decimal("30.00"),
         )
@@ -154,7 +153,7 @@ def test_same_portfolio_and_security_duplicate_is_rejected(session, portfolio, s
         repository.create_position(
             Position(
                 portfolio_id=portfolio.id,
-                security_id=security.id,
+                symbol=security.symbol,
                 shares=Decimal("4.00"),
                 average_cost=Decimal("40.00"),
             )
@@ -183,7 +182,7 @@ def test_different_portfolios_can_share_the_same_security(session, user) -> None
     first = repository.create_position(
         Position(
             portfolio_id=first_portfolio.id,
-            security_id=aapl.id,
+            symbol=aapl.symbol,
             shares=Decimal("10.00"),
             average_cost=Decimal("150.00"),
         )
@@ -191,12 +190,12 @@ def test_different_portfolios_can_share_the_same_security(session, user) -> None
     second = repository.create_position(
         Position(
             portfolio_id=second_portfolio.id,
-            security_id=aapl.id,
+            symbol=aapl.symbol,
             shares=Decimal("7.00"),
             average_cost=Decimal("155.00"),
         )
     )
 
     assert first.id != second.id
-    assert first.security_id == second.security_id
+    assert first.symbol == second.symbol
     assert first.portfolio_id != second.portfolio_id

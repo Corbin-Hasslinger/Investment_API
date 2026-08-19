@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class PositionCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    security_id: UUID
+    symbol: str = Field(min_length=1, max_length=10, description="The ticker symbol for the position")
     shares: Decimal = Field(gt=0, description="The number of shares for the position")
     average_cost: Decimal = Field(ge=0, description="The average price per share for the position")
 

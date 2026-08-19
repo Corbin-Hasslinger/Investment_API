@@ -18,6 +18,7 @@ def build_position_read(
     *,
     position_id: UUID | None = None,
     security_id: UUID | None = None,
+    symbol: str = "AAPL",
     shares: Decimal | str = "10.50",
     average_cost: Decimal | str = "102.00",
     created_at: datetime | None = None,
@@ -26,7 +27,7 @@ def build_position_read(
     timestamp = datetime.now(UTC)
     return PositionRead(
         id=position_id or uuid4(),
-        security_id=security_id or uuid4(),
+        symbol=symbol,
         shares=Decimal(str(shares)),
         average_cost=Decimal(str(average_cost)),
         created_at=created_at or timestamp,
@@ -46,12 +47,11 @@ def override_position_service(override_dependency):
 
 def test_post_positions_returns_201_and_response_body_shape(client, override_dependency) -> None:
     portfolio_id = uuid4()
-    security_id = uuid4()
     current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     created = build_position_read(
         position_id=uuid4(),
-        security_id=security_id,
+        symbol="AAPL",
         shares="25.50",
         average_cost="110.00",
     )
@@ -59,13 +59,13 @@ def test_post_positions_returns_201_and_response_body_shape(client, override_dep
 
     response = client.post(
         f"/portfolios/{portfolio_id}/positions",
-        json={"security_id": str(security_id), "shares": "25.50", "average_cost": "110.00"},
+        json={"symbol": " aapl ", "shares": "25.50", "average_cost": "110.00"},
     )
 
     assert response.status_code == 201
     assert response.json() == position_read_json(created)
     payload, called_portfolio_id, called_user_id = service.create_position.call_args.args
-    assert payload.security_id == security_id
+    assert payload.symbol == " aapl "
     assert payload.shares == Decimal("25.50")
     assert payload.average_cost == Decimal("110.00")
     assert called_portfolio_id == portfolio_id
@@ -78,13 +78,13 @@ def test_get_positions_returns_200_and_list_shape(client, override_dependency) -
     service = override_position_service(override_dependency)
     first = build_position_read(
         position_id=uuid4(),
-        security_id=uuid4(),
+        symbol="AAPL",
         shares="8.00",
         average_cost="50.00",
     )
     second = build_position_read(
         position_id=uuid4(),
-        security_id=uuid4(),
+        symbol="MSFT",
         shares="12.00",
         average_cost="60.00",
     )
@@ -114,12 +114,11 @@ def test_get_positions_returns_200_and_list_shape(client, override_dependency) -
 def test_get_position_returns_200_for_found(client, override_dependency) -> None:
     portfolio_id = uuid4()
     position_id = uuid4()
-    security_id = uuid4()
     current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     position = build_position_read(
         position_id=position_id,
-        security_id=security_id,
+        symbol="AAPL",
         shares="14.00",
         average_cost="75.00",
     )
@@ -154,12 +153,11 @@ def test_get_position_returns_404_for_missing(client, override_dependency) -> No
 def test_patch_position_returns_200_and_updated_payload(client, override_dependency) -> None:
     portfolio_id = uuid4()
     position_id = uuid4()
-    security_id = uuid4()
     current_user_id = UUID("11111111-1111-1111-1111-111111111111")
     service = override_position_service(override_dependency)
     updated = build_position_read(
         position_id=position_id,
-        security_id=security_id,
+        symbol="AAPL",
         shares="18.00",
         average_cost="85.00",
     )
@@ -196,13 +194,12 @@ def test_delete_position_returns_204_with_no_body(client, override_dependency) -
 
 def test_post_positions_returns_404_for_missing_security(client, override_dependency) -> None:
     portfolio_id = uuid4()
-    security_id = uuid4()
     service = override_position_service(override_dependency)
     service.create_position.side_effect = SecurityNotFoundError("Security missing")
 
     response = client.post(
         f"/portfolios/{portfolio_id}/positions",
-        json={"security_id": str(security_id), "shares": "5.00", "average_cost": "80.00"},
+        json={"symbol": "AAPL", "shares": "5.00", "average_cost": "80.00"},
     )
 
     assert response.status_code == 404
@@ -235,13 +232,12 @@ def test_get_position_returns_404_for_portfolio_ownership_mismatch(client, overr
 
 def test_post_positions_returns_409_for_duplicate_position(client, override_dependency) -> None:
     portfolio_id = uuid4()
-    security_id = uuid4()
     service = override_position_service(override_dependency)
     service.create_position.side_effect = PositionAlreadyExistsError("Duplicate position")
 
     response = client.post(
         f"/portfolios/{portfolio_id}/positions",
-        json={"security_id": str(security_id), "shares": "5.00", "average_cost": "80.00"},
+        json={"symbol": "AAPL", "shares": "5.00", "average_cost": "80.00"},
     )
 
     assert response.status_code == 409
@@ -308,5 +304,5 @@ def test_post_positions_returns_422_for_schema_validation_failure(client, overri
     )
 
     assert response.status_code == 422
-    assert response.json()["detail"][0]["loc"] == ["body", "security_id"]
+    assert response.json()["detail"][0]["loc"] == ["body", "symbol"]
     service.create_position.assert_not_called()

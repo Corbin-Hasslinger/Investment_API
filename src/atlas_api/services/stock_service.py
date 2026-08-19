@@ -3,11 +3,13 @@ from typing import Any
 
 from atlas_api.clients.finnhub_client import FinnhubClient
 from atlas_api.schemas.stock import StockQuote
+from atlas_api.services.security_service import SecurityService
 
 
 class StockService:
-    def __init__(self, finnhub_client: FinnhubClient):
+    def __init__(self, finnhub_client: FinnhubClient, security_service: SecurityService):
         self.finnhub_client = finnhub_client
+        self.security_service = security_service
 
     async def fetch_stock_quote(self, symbol: str) -> StockQuote:
         """Fetches the latest stock quote for the given ticker symbol, using the Finnhub API.
@@ -37,4 +39,6 @@ class StockService:
         )
     async def validate_ticker_symbol(self, symbol: str) -> dict[str, Any]:
         """Validates a given ticker symbol by checking if it exists in the Finnhub API."""
-        return await self.finnhub_client.is_valid_symbol(symbol)
+        symbol = self.security_service.normalize_symbol(symbol)
+        is_valid = await self.finnhub_client.is_valid_symbol(symbol)
+        return {"is_valid": is_valid}

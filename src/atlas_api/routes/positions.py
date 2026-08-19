@@ -19,14 +19,14 @@ router = APIRouter(
     response_model=PositionRead,
     status_code=status.HTTP_201_CREATED,
 )
-def create_position(
+async def create_position(
     service: PositionServiceDI,
     payload: PositionCreate,
     portfolio_id: UUID,
     current_user: CurrentUserDI,
 ) -> PositionRead:
     """Creates a new position for a portfolio owned by the current user."""
-    return service.create_position(payload, portfolio_id, current_user.id)
+    return await service.create_position(payload, portfolio_id, current_user.id)
 
 
 @router.get(

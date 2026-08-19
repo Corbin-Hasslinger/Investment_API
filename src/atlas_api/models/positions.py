@@ -13,7 +13,7 @@ from sqlalchemy import (
     Numeric,
     UniqueConstraint,
 )
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, String
 
 
 class Position(
@@ -21,7 +21,7 @@ class Position(
     table=True
 ):
     __table_args__ = (
-        UniqueConstraint("portfolio_id", "security_id", name="uq_portfolio_id_security_id"),
+        UniqueConstraint("portfolio_id", "symbol", name="uq_portfolio_id_symbol"),
     )
 
     id: uuid.UUID = Field(
@@ -41,11 +41,11 @@ class Position(
                     nullable=False,
                     )
             )
-    security_id: uuid.UUID = Field(
+    symbol: str = Field(
                 sa_column=Column(
-                    "security_id", 
-                    UUID(as_uuid=True),
-                    ForeignKey("security.id"),
+                    "symbol",
+                    String(10),
+                    ForeignKey("security.symbol"),
                     nullable=False,
                     )
             )

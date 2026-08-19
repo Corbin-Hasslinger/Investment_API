@@ -2,7 +2,11 @@ from typing import Any
 
 import httpx
 
-from atlas_api.tools.errors import UpstreamRateLimitedError, UpstreamTimeoutError, UpstreamUnavailableError
+from atlas_api.tools.errors import (
+    UpstreamRateLimitedError,
+    UpstreamTimeoutError,
+    UpstreamUnavailableError,
+)
 
 
 class FinnhubClient:

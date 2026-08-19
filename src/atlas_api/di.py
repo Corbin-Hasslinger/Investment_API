@@ -48,6 +48,8 @@ def get_current_user() -> CurrentUserRead:
 
 type CurrentUserDI = Annotated[CurrentUserRead, Depends(get_current_user)]
 
+type SessionDI = Annotated[Session, Depends(get_session)]
+
 def get_finnhub_client(settings: SettingsDI) -> FinnhubClient:
     """Dependency function to provide a FinnhubClient instance."""
     api_key = settings.finnhub_api_key
@@ -59,13 +61,36 @@ def get_finnhub_client(settings: SettingsDI) -> FinnhubClient:
 
 type FinnhubClientDI = Annotated[FinnhubClient, Depends(get_finnhub_client)]
 
-def get_stock_service(finnhub_client: FinnhubClientDI) -> StockService:
+def get_security_repository(session: SessionDI):
+    """Dependency function to provide a SecurityRepository instance."""
+    return SecurityRepository(session=session)
+
+type SecurityRepositoryDI = Annotated[
+    SecurityRepository, Depends(get_security_repository)
+]
+
+def get_security_service(
+    security_repository: SecurityRepositoryDI,
+    finnhub_client: FinnhubClientDI,
+) -> SecurityService:
+    """Dependency function to provide a SecurityService instance."""
+    return SecurityService(
+        security_repository=security_repository,
+        finnhub_client=finnhub_client,
+    )
+
+type SecurityServiceDI = Annotated[SecurityService, Depends(get_security_service)]
+def get_stock_service(
+    finnhub_client: FinnhubClientDI,
+    security_service: SecurityServiceDI,
+) -> StockService:
     """Dependency function to provide a StockService instance."""
-    return StockService(finnhub_client=finnhub_client)
+    return StockService(
+        finnhub_client=finnhub_client,
+        security_service=security_service,
+    )
 
 type StockServiceDI = Annotated[StockService, Depends(get_stock_service)]
-
-type SessionDI = Annotated[Session, Depends(get_session)]
 
 def get_portfolio_repository(session: SessionDI):
     """Dependency function to provide a PortfolioRepository instance."""
@@ -81,13 +106,6 @@ def get_portfolio_service(portfolio_repository: PortfolioRepositoryDI) -> Portfo
 
 type PortfolioServiceDI = Annotated[PortfolioService, Depends(get_portfolio_service)]
 
-def get_security_repository(session: SessionDI):
-    """Dependency function to provide a SecurityRepository instance."""
-    return SecurityRepository(session=session)
-
-type SecurityRepositoryDI = Annotated[
-    SecurityRepository, Depends(get_security_repository)
-]
 
 def get_position_repository(session: SessionDI):
     """Dependency function to provide a PositionRepository instance."""
@@ -99,28 +117,17 @@ type PositionRepositoryDI = Annotated[
 
 def get_position_service(
     position_repository: PositionRepositoryDI,
-    security_repository: SecurityRepositoryDI,
     portfolio_repository: PortfolioRepositoryDI,
+    security_service: SecurityServiceDI,
 ) -> PositionService:
     """Dependency function to provide a PositionService instance."""
     return PositionService(
         position_repository=position_repository,
-        security_repository=security_repository,
         portfolio_repository=portfolio_repository,
+        security_service=security_service,
     )
 
 type PositionServiceDI = Annotated[PositionService, Depends(get_position_service)]
-
-def get_security_service(
-    security_repository: SecurityRepositoryDI,
-    finnhub_client: FinnhubClientDI,
-) -> SecurityService:
-    """Dependency function to provide a SecurityService instance."""
-    return SecurityService(
-        security_repository=security_repository,
-        finnhub_client=finnhub_client,
-    )
-type SecurityServiceDI = Annotated[SecurityService, Depends(get_security_service)]
 
 def get_market_data_service(
     security_service: SecurityServiceDI,

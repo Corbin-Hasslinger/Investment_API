@@ -58,9 +58,9 @@ class PositionRepository:
             self.session.delete(position)
             self.session.flush()
 
-    def exists_by_portfolio_and_security(self, security_id: UUID, portfolio_id: UUID) -> bool:
+    def exists_by_portfolio_and_security(self, symbol: str, portfolio_id: UUID) -> bool:
         return self.session.exec(
             select(Position).where(
                 Position.portfolio_id == portfolio_id,
-                Position.security_id == security_id)
+                Position.symbol == symbol)
         ).first() is not None
