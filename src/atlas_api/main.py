@@ -10,12 +10,17 @@ from .tools.errors import (
     InvalidPortfolioDataError,
     InvalidPositionDataError,
     InvalidSecurityDataError,
+    InvalidSymbolFormatError,
     PortfolioAlreadyExistsError,
     PortfolioNotFoundError,
     PositionAlreadyExistsError,
     PositionNotFoundError,
     SecurityAlreadyExistsError,
     SecurityNotFoundError,
+    UnsupportedSymbolError,
+    UpstreamRateLimitedError,
+    UpstreamTimeoutError,
+    UpstreamUnavailableError,
 )
 
 
@@ -97,6 +102,36 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"error": {"code": "invalid_position_data", "message": str(exc) or "Invalid position data"}},
         )
+    @app.exception_handler(InvalidSymbolFormatError)
+    async def handle_invalid_symbol_format_error(_: Request, exc: InvalidSymbolFormatError):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": {"code": "invalid_symbol_format", "message": str(exc) or "Invalid symbol format"}},
+        )
+    @app.exception_handler(UnsupportedSymbolError)
+    async def handle_unsupported_symbol_error(_: Request, exc: UnsupportedSymbolError):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": {"code": "unsupported_symbol", "message": str(exc) or "Unsupported symbol"}},
+        )
+    @app.exception_handler(UpstreamTimeoutError)
+    async def handle_upstream_timeout_error(_: Request, exc: UpstreamTimeoutError):
+        return JSONResponse(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            content={"error": {"code": "upstream_timeout", "message": str(exc) or "Upstream API timeout"}},
+        )
+    @app.exception_handler(UpstreamRateLimitedError)
+    async def handle_upstream_rate_limited_error(_: Request, exc: UpstreamRateLimitedError):
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={"error": {"code": "upstream_rate_limited", "message": str(exc) or "Upstream API rate limited"}},
+        )
+    @app.exception_handler(UpstreamUnavailableError)
+    async def handle_upstream_unavailable_error(_: Request, exc: UpstreamUnavailableError):
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"error": {"code": "upstream_unavailable", "message": str(exc) or "Upstream API unavailable"}},
+        )    
 
 def register_lifecycle_hooks(app: FastAPI) -> None:
     """Register lifecycle hooks for the FastAPI application."""

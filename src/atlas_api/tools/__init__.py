@@ -2,12 +2,17 @@ from .errors import (
     InvalidPortfolioDataError,
     InvalidPositionDataError,
     InvalidSecurityDataError,
+    InvalidSymbolFormatError,
     PortfolioAlreadyExistsError,
     PortfolioNotFoundError,
     PositionAlreadyExistsError,
     PositionNotFoundError,
     SecurityAlreadyExistsError,
     SecurityNotFoundError,
+    UnsupportedSymbolError,
+    UpstreamRateLimitedError,
+    UpstreamTimeoutError,
+    UpstreamUnavailableError,
 )
 from .pagination import PaginatedResult, PaginationParams
 
@@ -15,6 +20,7 @@ __all__ = [
     "InvalidPortfolioDataError",
     "InvalidPositionDataError",
     "InvalidSecurityDataError",
+    "InvalidSymbolFormatError",
     "PaginatedResult",
     "PaginationParams",
     "PortfolioAlreadyExistsError",
@@ -23,4 +29,8 @@ __all__ = [
     "PositionNotFoundError",
     "SecurityAlreadyExistsError",
     "SecurityNotFoundError",
+    "UnsupportedSymbolError",
+    "UpstreamRateLimitedError",
+    "UpstreamTimeoutError",
+    "UpstreamUnavailableError"
 ]

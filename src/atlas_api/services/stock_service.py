@@ -1,4 +1,6 @@
 
+from typing import Any
+
 from atlas_api.clients.finnhub_client import FinnhubClient
 from atlas_api.schemas.stock import StockQuote
 
@@ -7,7 +9,7 @@ class StockService:
     def __init__(self, finnhub_client: FinnhubClient):
         self.finnhub_client = finnhub_client
 
-    async def fetch_stock_quote(self, ticker: str) -> StockQuote:
+    async def fetch_stock_quote(self, symbol: str) -> StockQuote:
         """Fetches the latest stock quote for the given ticker symbol, using the Finnhub API.
         
             Return fields: 
@@ -20,10 +22,10 @@ class StockService:
                 pc: Previous close price
                 t: Unix timestamp for the quote.
             """
-        quote_data = await self.finnhub_client.get_quote(ticker)
+        quote_data = await self.finnhub_client.get_quote(symbol)
         
         return StockQuote(
-            ticker=ticker.upper(),
+            symbol=symbol.upper(),
             current_price=quote_data["c"],
             price_change=quote_data["d"],
             percent_change=quote_data["dp"],
@@ -33,3 +35,6 @@ class StockService:
             previous_close_price=quote_data["pc"],
             timestamp=quote_data["t"]
         )
+    async def validate_ticker_symbol(self, symbol: str) -> dict[str, Any]:
+        """Validates a given ticker symbol by checking if it exists in the Finnhub API."""
+        return await self.finnhub_client.is_valid_symbol(symbol)

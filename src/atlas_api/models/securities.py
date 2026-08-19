@@ -21,8 +21,8 @@ class Security(SQLModel,
     symbol: str = Field(
                 min_length=1,
                 sa_column=Column(
-                    "ticker",
-                    String(5),
+                    "symbol",
+                    String(10),
                     nullable=False,
                     unique=True,
                 )

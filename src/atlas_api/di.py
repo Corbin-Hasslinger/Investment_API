@@ -4,6 +4,9 @@ from uuid import UUID
 from fastapi import Depends, Query
 from sqlmodel import Session
 
+from atlas_api.services.market_data_service import MarketDataService
+from atlas_api.services.security_service import SecurityService
+
 from .clients.finnhub_client import FinnhubClient
 from .core.config import Settings, get_settings
 from .core.db import get_session
@@ -19,12 +22,14 @@ from .tools import PaginationParams
 __all__ = [
     "CurrentUserDI",
     "FinnhubClientDI",
+    "MarketDataServiceDI",
     "PaginationParams",
     "PortfolioRepositoryDI",
     "PortfolioServiceDI",
     "PositionRepositoryDI",
     "PositionServiceDI",
     "SecurityRepositoryDI",
+    "SecurityServiceDI",
     "SessionDI",
     "SettingsDI",
     "StockServiceDI",
@@ -105,6 +110,31 @@ def get_position_service(
     )
 
 type PositionServiceDI = Annotated[PositionService, Depends(get_position_service)]
+
+def get_security_service(
+    security_repository: SecurityRepositoryDI,
+    finnhub_client: FinnhubClientDI,
+) -> SecurityService:
+    """Dependency function to provide a SecurityService instance."""
+    return SecurityService(
+        security_repository=security_repository,
+        finnhub_client=finnhub_client,
+    )
+type SecurityServiceDI = Annotated[SecurityService, Depends(get_security_service)]
+
+def get_market_data_service(
+    security_service: SecurityServiceDI,
+    finnhub_client: FinnhubClientDI,
+) -> MarketDataService:
+    """Dependency function to provide a MarketDataService instance."""
+
+    return MarketDataService(
+        security_service=security_service,
+        finnhub_client=finnhub_client,
+    )
+type MarketDataServiceDI = Annotated[
+    MarketDataService, Depends(get_market_data_service)
+]
 
 def get_pagination_params(
         page: Annotated[int, Query(ge=1)] =1,

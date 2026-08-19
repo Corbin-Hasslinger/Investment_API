@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class StockQuote(BaseModel):
-    ticker: str 
+    symbol: str 
     current_price: float
     price_change: float
     percent_change: float

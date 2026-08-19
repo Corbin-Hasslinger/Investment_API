@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlmodel import col, select
 
 from atlas_api.schemas.security import SecurityUpdate
+from atlas_api.tools.errors import SecurityNotFoundError
 
 from ..models import Security
 
@@ -45,12 +46,22 @@ class SecurityRepository:
             self.session.add(security)
             self.session.flush()
             return security
-        raise ValueError(f"Security with ID {security_id} not found")
+        raise SecurityNotFoundError(f"Security with ID {security_id} not found")
 
     def delete_security(self, security_id: UUID) -> None:
         security = self.get_security_by_id(security_id)
         if security:
             self.session.delete(security)
             return
-        raise ValueError(f"Security with ID {security_id} not found")
-            
+        raise SecurityNotFoundError(f"Security with ID {security_id} not found")
+
+    def get_security_by_symbol(self, symbol: str) -> Security | None:
+        """Retrieve a Security by its canonical symbol.
+        
+        Returns None if not found (does not check upstream).
+        Symbol should be pre-normalized.
+        """
+        return self.session.exec(
+            select(Security).where(Security.symbol == symbol)
+        ).first()
+

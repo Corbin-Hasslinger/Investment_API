@@ -1,8 +1,8 @@
 
 import datetime
-from decimal import Decimal
 import uuid
 from datetime import UTC
+from decimal import Decimal
 
 from sqlalchemy import (
     UUID,

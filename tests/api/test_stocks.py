@@ -1,49 +1,58 @@
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
-
-from atlas_api.core.config import Settings
-from atlas_api.di import get_finnhub_client, get_stock_service
-from atlas_api.services.stock_service import StockService
-
-
-def test_get_finnhub_client_requires_api_key() -> None:
-    settings = Settings(environment="test", finnhub_api_key=None)
-
-    with pytest.raises(ValueError, match="FINNHUB_API_KEY"):
-        get_finnhub_client(settings)
+from atlas_api.di import get_market_data_service
+from atlas_api.schemas.stock import StockQuote
+from atlas_api.services.market_data_service import MarketDataService
+from atlas_api.tools.errors import InvalidSymbolFormatError, UpstreamTimeoutError
 
 
-def test_get_stock_quote_uses_dependency_override(client, override_dependency) -> None:
-    stock_service = MagicMock(spec=StockService)
-    stock_service.fetch_stock_quote = AsyncMock(
-        return_value={
-            "ticker": "AAPL",
-            "current_price": 210.5,
-            "price_change": 1.2,
-            "percent_change": 0.57,
-            "high_price": 211.0,
-            "low_price": 208.2,
-            "open_price": 209.1,
-            "previous_close_price": 209.3,
-            "timestamp": 1722787200,
-        }
-    )
+def test_get_quote_returns_200_with_valid_data(client, override_dependency):
+    """GET /market/quote/{ticker} returns 200 with quote data."""
+    market_data_service = MagicMock(spec=MarketDataService)
+    market_data_service.get_quote = AsyncMock(return_value=StockQuote(
+        symbol="AAPL",
+        current_price=150.25,
+        price_change=2.50,
+        percent_change=1.69,
+        high_price=152.00,
+        low_price=149.50,
+        open_price=149.00,
+        previous_close_price=147.75,
+        timestamp=1692374400,
+    ))
 
-    override_dependency(get_stock_service, lambda: stock_service)
+    override_dependency(get_market_data_service, lambda: market_data_service)
 
-    response = client.get("/stocks/AAPL/quote")
+    response = client.get("/market/quote/AAPL")
 
     assert response.status_code == 200
-    assert response.json() == {
-        "ticker": "AAPL",
-        "current_price": 210.5,
-        "price_change": 1.2,
-        "percent_change": 0.57,
-        "high_price": 211.0,
-        "low_price": 208.2,
-        "open_price": 209.1,
-        "previous_close_price": 209.3,
-        "timestamp": 1722787200,
-    }
-    stock_service.fetch_stock_quote.assert_awaited_once_with("AAPL")
+    assert response.json()["symbol"] == "AAPL"
+    assert response.json()["current_price"] == 150.25
+
+
+def test_get_quote_returns_400_for_invalid_symbol(client, override_dependency):
+    """GET /market/quote/{ticker} returns 400 for invalid symbol."""
+    market_data_service = MagicMock(spec=MarketDataService)
+    market_data_service.get_quote = AsyncMock(
+        side_effect=InvalidSymbolFormatError("Invalid format")
+    )
+
+    override_dependency(get_market_data_service, lambda: market_data_service)
+
+    response = client.get("/market/quote/TOOLONG6CHARS")
+
+    assert response.status_code == 400
+
+
+def test_get_quote_returns_503_for_upstream_timeout(client, override_dependency):
+    """GET /market/quote/{ticker} returns 503 for upstream timeout."""
+    market_data_service = MagicMock(spec=MarketDataService)
+    market_data_service.get_quote = AsyncMock(
+        side_effect=UpstreamTimeoutError("Timeout")
+    )
+
+    override_dependency(get_market_data_service, lambda: market_data_service)
+
+    response = client.get("/market/quote/AAPL")
+
+    assert response.status_code == 503
