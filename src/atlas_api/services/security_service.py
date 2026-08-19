@@ -1,5 +1,4 @@
 import re
-import uuid
 
 from atlas_api.clients.finnhub_client import FinnhubClient
 from atlas_api.models import Security
@@ -76,7 +75,6 @@ class SecurityService:
 
         security = self.security_repository.create_security(
             Security(
-                id=uuid.uuid4(),
                 symbol=normalized,
                 name=security_info["name"],
                 exchange=security_info["exchange"],

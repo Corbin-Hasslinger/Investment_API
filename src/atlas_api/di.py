@@ -16,7 +16,6 @@ from .repositories.security_repository import SecurityRepository
 from .schemas.user import CurrentUserRead
 from .services.portfolio_service import PortfolioService
 from .services.position_service import PositionService
-from .services.stock_service import StockService
 from .tools import PaginationParams
 
 __all__ = [
@@ -32,7 +31,6 @@ __all__ = [
     "SecurityServiceDI",
     "SessionDI",
     "SettingsDI",
-    "StockServiceDI",
 ]
 
 type SettingsDI = Annotated[Settings, Depends(get_settings)]
@@ -80,17 +78,6 @@ def get_security_service(
     )
 
 type SecurityServiceDI = Annotated[SecurityService, Depends(get_security_service)]
-def get_stock_service(
-    finnhub_client: FinnhubClientDI,
-    security_service: SecurityServiceDI,
-) -> StockService:
-    """Dependency function to provide a StockService instance."""
-    return StockService(
-        finnhub_client=finnhub_client,
-        security_service=security_service,
-    )
-
-type StockServiceDI = Annotated[StockService, Depends(get_stock_service)]
 
 def get_portfolio_repository(session: SessionDI):
     """Dependency function to provide a PortfolioRepository instance."""

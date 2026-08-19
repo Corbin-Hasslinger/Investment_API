@@ -1,9 +1,8 @@
 from unittest.mock import AsyncMock, MagicMock
 
-from atlas_api.di import get_market_data_service, get_stock_service
+from atlas_api.di import get_market_data_service
 from atlas_api.schemas.stock import StockQuote
 from atlas_api.services.market_data_service import MarketDataService
-from atlas_api.services.stock_service import StockService
 from atlas_api.tools.errors import InvalidSymbolFormatError, UpstreamTimeoutError
 
 
@@ -58,18 +57,3 @@ def test_get_quote_returns_503_for_upstream_timeout(client, override_dependency)
 
     assert response.status_code == 504
 
-
-def test_validate_symbol_returns_200_with_valid_symbol(client, override_dependency):
-    """GET /market/validate/{symbol} resolves StockService dependencies correctly."""
-    stock_service = MagicMock(spec=StockService)
-    stock_service.validate_ticker_symbol = AsyncMock(
-        return_value={"is_valid": {"name": "Apple Inc", "ticker": "AAPL"}}
-    )
-
-    override_dependency(get_stock_service, lambda: stock_service)
-
-    response = client.get("/market/validate/AAPL")
-
-    assert response.status_code == 200
-    assert response.json() == {"is_valid": {"name": "Apple Inc", "ticker": "AAPL"}}
-    stock_service.validate_ticker_symbol.assert_awaited_once_with("AAPL")

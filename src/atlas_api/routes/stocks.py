@@ -1,11 +1,10 @@
 import logging
-from typing import Any
 
 from fastapi import APIRouter
 
 from atlas_api.schemas.stock import StockQuote
 
-from ..di import MarketDataServiceDI, StockServiceDI
+from ..di import MarketDataServiceDI
 
 logger = logging.getLogger(__name__)
 
@@ -26,15 +25,3 @@ async def get_stock_quote(
     ) -> StockQuote:
     """ Returns a formatted stock quote for the given ticker symbol, using the Finnhub API. """
     return await market_service.get_quote(symbol)
-        
-@router.get(
-    "/validate/{symbol}",
-    summary="Validate a given ticker symbol",
-    response_description="Returns true if the ticker symbol is valid, false otherwise",
-    )
-async def validate_ticker_symbol(
-    symbol: str,
-    stock_service: StockServiceDI
-    ) -> dict[str, Any]:
-    """ Validates a given ticker symbol by checking if it exists in the Finnhub API. """
-    return await stock_service.validate_ticker_symbol(symbol)

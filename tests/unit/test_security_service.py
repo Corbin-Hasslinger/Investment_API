@@ -139,3 +139,27 @@ class TestResolveSecurityWithMocks:
             await security_service.resolve_security("fakezz")
 
         security_repository.create_security.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_resolve_security_rejects_incomplete_upstream_profile(
+        self,
+        security_repository: MagicMock,
+        finnhub_client: MagicMock,
+        security_service: SecurityService,
+    ):
+        """Incomplete upstream data must not be persisted as a Security."""
+        security_repository.get_security_by_symbol.return_value = None
+        finnhub_client.symbol_lookup = AsyncMock(
+            return_value={
+                "name": "Apple Inc.",
+                "exchange": "",
+                "currency": "USD",
+            }
+        )
+
+        with pytest.raises(UnsupportedSymbolError):
+            await security_service.resolve_security("AAPL")
+
+        security_repository.create_security.assert_not_called()
+        security_repository.commit.assert_not_called()
+        security_repository.refresh.assert_not_called()
