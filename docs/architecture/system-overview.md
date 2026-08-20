@@ -106,6 +106,34 @@ Calculates:
  - Holding allocation
  - Portfolio concentration
 
+### Portfolio Analytics Flow
+
+`GET /portfolios/{portfolio_id}/analytics`
+
+This is a read-only multi-repository workflow:
+
+```text
+Client
+        |
+        v
+Analytics Router
+        |
+        v
+PortfolioAnalyticsService
+        |-- Portfolio Repository (ownership)
+        |-- Position Repository (holdings)
+        |-- Security Repository (symbols)
+        `-- MarketDataService (current quotes)
+        |
+        v
+Portfolio Analytics Response
+```
+
+The service loads all holdings, retrieves the required quotes, calculates
+per-position metrics and portfolio totals, then returns one consistent
+snapshot. Quote retrieval is initially implemented sequentially for
+correctness; asynchronous concurrent retrieval is a later optimization.
+
 ### Research Domain
 
 Supports:

@@ -98,6 +98,78 @@ Removes a position from the portfolio.
 
 ## Portfolio Analytics
 
+Portfolio analytics is a read-only application workflow that combines stored
+portfolio positions with current market quotes. The first version exposes one
+combined response so clients can render portfolio totals and holding details
+from the same calculation snapshot.
+
+### Get Portfolio Analytics
+
+`GET /portfolios/{portfolio_id}/analytics`
+
+Returns current calculated analytics for a portfolio owned by the
+authenticated user.
+
+The response uses the following contract:
+
+```json
+{
+  "portfolio_id": "uuid",
+  "total_market_value": "15432.20",
+  "total_cost_basis": "13982.50",
+  "total_unrealized_gain_loss": "1449.70",
+  "total_unrealized_gain_loss_percent": "10.37",
+  "positions": [
+    {
+      "symbol": "AAPL",
+      "shares": "10",
+      "average_cost": "180.00",
+      "current_price": "215.00",
+      "market_value": "2150.00",
+      "cost_basis": "1800.00",
+      "unrealized_gain_loss": "350.00",
+      "unrealized_gain_loss_percent": "19.44",
+      "allocation_percent": "13.93"
+    }
+  ]
+}
+```
+
+All monetary and percentage values use `Decimal` calculations and are
+serialized as strings. Monetary values and percentages are rounded to two
+decimal places. Shares and average cost retain their calculated decimal
+precision.
+
+For each position:
+
+```text
+cost_basis = shares × average_cost
+market_value = shares × current_price
+unrealized_gain_loss = market_value - cost_basis
+unrealized_gain_loss_percent = unrealized_gain_loss / cost_basis × 100
+allocation_percent = market_value / total_market_value × 100
+```
+
+Portfolio totals are calculated as follows:
+
+```text
+total_cost_basis = sum(position cost_basis)
+total_market_value = sum(position market value)
+total_unrealized_gain_loss = total_market_value - total_cost_basis
+total_unrealized_gain_loss_percent =
+    total_unrealized_gain_loss / total_cost_basis × 100
+```
+
+Positions are returned in deterministic normalized-symbol order. An empty
+portfolio returns zero totals, a `null` total percentage, and an empty
+`positions` array without making market-data requests. A zero cost basis also
+produces a `null` gain/loss percentage. If any required market quote fails,
+the entire analytics request fails rather than returning incomplete totals.
+
+The v1 response does not include separate gainer, loser, sector, or historical
+performance sections. Those can be added as later projections of the same
+analytics workflow.
+
 ### Get Portfolio Summary
 
 `GET /portfolios/{portfolio_id}/summary`

@@ -249,3 +249,54 @@ resolve_security("msft")        → normalizes to "MSFT", creates new Security i
 **Step 3C**: Implement `GET /market/quote/{ticker}` endpoint using validate_symbol (query) path.
 
 **Step 4**: Refactor Position creation to accept `symbol` instead of `security_id`.
+
+## Milestone 4: Portfolio Analytics
+
+**Status**: Planned
+
+Portfolio Analytics is the first milestone that combines portfolio positions,
+security resolution, and live market data into a user-facing calculation.
+
+### Initial endpoint
+
+`GET /portfolios/{portfolio_id}/analytics`
+
+The endpoint returns total market value, total cost basis, total unrealized
+gain/loss, total unrealized gain/loss percentage, and calculated metrics for
+each position.
+
+### Contract and calculation rules
+
+- Analytics are read-only; the workflow performs no database commits.
+- All monetary and percentage calculations use `Decimal`.
+- Monetary values and percentages are rounded to two decimal places and
+    serialized as strings.
+- Positions are returned in normalized-symbol order.
+- Empty portfolios return zero totals and no positions without quote requests.
+- A zero cost basis produces a `null` gain/loss percentage.
+- Any required quote failure fails the complete analytics request.
+- V1 excludes separate gainer/loser lists, sector allocation, and historical
+    performance.
+
+Per-position calculations:
+
+```text
+cost_basis = shares × average_cost
+market_value = shares × current_price
+unrealized_gain_loss = market_value - cost_basis
+unrealized_gain_loss_percent = unrealized_gain_loss / cost_basis × 100
+allocation_percent = market_value / total_market_value × 100
+```
+
+Portfolio totals are calculated from the position results. The total
+gain/loss percentage is `null` when total cost basis is zero.
+
+### Implementation sequence
+
+1. Define analytics schemas and deterministic calculation tests.
+2. Implement read-only analytics data loading and ownership validation.
+3. Fetch quotes sequentially through `MarketDataService`.
+4. Calculate per-position metrics and portfolio totals.
+5. Add the analytics route, dependency wiring, and API tests.
+6. Optimize quote retrieval with concurrent async I/O after correctness is
+     established.

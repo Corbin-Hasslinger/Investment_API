@@ -10,6 +10,7 @@ unset VIRTUAL_ENV
 echo "Project root: $(pwd)"
 echo "Synchronizing Python environment..."
 
+uv python install
 uv sync
 
 echo "Environment synchronized successfully."

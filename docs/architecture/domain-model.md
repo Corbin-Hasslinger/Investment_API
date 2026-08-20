@@ -126,6 +126,23 @@ Calculates information derived from portfolio positions and market data.
 - Calculate holding allocation
 - Produce analytical results without modifying portfolio records
 
+### Portfolio analytics contract
+
+The first analytics use case is exposed through
+`GET /portfolios/{portfolio_id}/analytics`. It returns portfolio totals and
+calculated metrics for every holding in one read-only response.
+
+The analytics application service coordinates the following dependencies:
+
+- Portfolio repository for ownership validation
+- Position repository for portfolio holdings
+- Security repository for symbol-based security resolution
+- Market data service for current quotes
+
+The service performs no database commits. If a required quote cannot be
+retrieved, the request fails as a whole so that totals are never presented as
+complete when they are not.
+
 ## Research
 
 Supports workflows used to evaluate and discover investments.
