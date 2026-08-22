@@ -18,13 +18,13 @@ The Security table is suitable for storing stable security identity data. Verifi
 - Symbol DB column length: 5 characters
 - Python field name: `symbol`; physical column name: `ticker`
 - Repository supports create, get-by-id, list, update, delete
-- Missing: get-by-symbol and symbol normalization logic
+- Get-by-symbol and symbol normalization logic are implemented.
 
 ---
 
 ## Step 2: Symbol Normalization Policy
 
-**Status**: 🔄 In Progress
+**Status**: ✅ Complete
 
 This step locks the canonical symbol format and defines the boundary between query and command operations.
 
@@ -228,27 +228,22 @@ resolve_security("msft")        → normalizes to "MSFT", creates new Security i
 
 ### Implementation Checklist
 
-- [ ] Add `normalize_symbol(symbol: str) -> str` to SecurityService
-- [ ] Add `validate_symbol(symbol: str) -> bool` to SecurityService (calls normalize, checks Finnhub)
-- [ ] Add `resolve_security(symbol: str) -> Security` to SecurityService (creates if needed)
-- [ ] Add `get_security_by_symbol(symbol: str) -> Security | None` to SecurityRepository
-- [ ] Define Finnhub-typed errors (TickerNotFoundError, etc.) in tools/errors.py
-- [ ] Write unit tests for normalize_symbol covering all test matrix cases
-- [ ] Write unit tests for resolve_security with mocked FinnhubClient
-- [ ] Update SecurityCreate schema to accept `symbol` input (validate internally)
-- [ ] Verify no duplicate logic in PositionService or MarketDataService
+- [x] Add `normalize_symbol(symbol: str) -> str` to SecurityService
+- [x] Add `resolve_security(symbol: str) -> SecurityRead` to SecurityService (creates if needed)
+- [x] Add `get_security_by_symbol(symbol: str) -> Security | None` to SecurityRepository
+- [x] Define typed upstream and symbol errors in `tools/errors.py`
+- [x] Write unit tests for `normalize_symbol` covering the test matrix cases
+- [x] Write unit tests for `resolve_security` with mocked FinnhubClient
+- [x] Update position creation to accept normalized `symbol` input
+- [x] Verify no duplicate symbol-resolution logic in PositionService or MarketDataService
 
 ---
 
-## Next Steps
+### Milestone 3 Completion Notes
 
-**Step 3**: Implement SecurityService with normalize_symbol, validate_symbol, and resolve_security.
-
-**Step 3B**: Harden FinnhubClient with typed error handling and timeout configuration.
-
-**Step 3C**: Implement `GET /market/quote/{ticker}` endpoint using validate_symbol (query) path.
-
-**Step 4**: Refactor Position creation to accept `symbol` instead of `security_id`.
+Security normalization, local security resolution, typed upstream error handling,
+market quote retrieval, and symbol-based position creation are implemented and
+covered by the current test suite.
 
 ## Milestone 4: Portfolio Analytics
 

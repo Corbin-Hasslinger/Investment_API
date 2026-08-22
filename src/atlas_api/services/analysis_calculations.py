@@ -49,12 +49,16 @@ class AnalysisCalculations:
             average_cost: Decimal,
             current_price: Decimal,
     ) -> PortfolioPositionAnalyticsRead:
-        cost_basis = self.calculate_cost_basis(shares, average_cost)
-        market_value = self.calculate_market_value(current_price, shares)
-        unrealized_gain_loss = self.calculate_unrealized_gain_loss(current_price, average_cost, shares)
+        raw_cost_basis = shares * average_cost
+        raw_market_value = current_price * shares
+        raw_unrealized_gain_loss = raw_market_value - raw_cost_basis
+
+        cost_basis = self.round_money(raw_cost_basis)
+        market_value = self.round_money(raw_market_value)
+        unrealized_gain_loss = self.round_money(raw_unrealized_gain_loss)
         unrealized_gain_loss_percent = self.calculate_unrealized_gain_loss_percent(
-            unrealized_gain_loss,
-            cost_basis,
+            raw_unrealized_gain_loss,
+            raw_cost_basis,
         )
         return PortfolioPositionAnalyticsRead(
             symbol=symbol,

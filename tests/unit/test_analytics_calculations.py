@@ -107,7 +107,7 @@ class TestCalculatePositionAnalytics:
         assert result.cost_basis == Decimal("33.36")
         assert result.market_value == Decimal("33.40")
         assert result.unrealized_gain_loss == Decimal("0.03")
-        assert result.unrealized_gain_loss_percent == Decimal("0.09")
+        assert result.unrealized_gain_loss_percent == Decimal("0.10")
         assert isinstance(result.cost_basis, Decimal)
         assert isinstance(result.market_value, Decimal)
         assert isinstance(result.unrealized_gain_loss, Decimal)
