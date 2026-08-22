@@ -4,7 +4,9 @@ from uuid import UUID
 from fastapi import Depends, Query
 from sqlmodel import Session
 
+from atlas_api.services.analysis_calculations import AnalysisCalculations
 from atlas_api.services.market_data_service import MarketDataService
+from atlas_api.services.portfolio_analytics_service import PortfolioAnalyticsService
 from atlas_api.services.security_service import SecurityService
 
 from .clients.finnhub_client import FinnhubClient
@@ -19,10 +21,12 @@ from .services.position_service import PositionService
 from .tools import PaginationParams
 
 __all__ = [
+    "AnalysisCalculationsDI",
     "CurrentUserDI",
     "FinnhubClientDI",
     "MarketDataServiceDI",
     "PaginationParams",
+    "PortfolioAnalyticsServiceDI",
     "PortfolioRepositoryDI",
     "PortfolioServiceDI",
     "PositionRepositoryDI",
@@ -128,6 +132,29 @@ def get_market_data_service(
     )
 type MarketDataServiceDI = Annotated[
     MarketDataService, Depends(get_market_data_service)
+]
+def get_analysis_calculations() -> AnalysisCalculations:
+    """Dependency function to provide an AnalysisCalculations instance."""
+    return AnalysisCalculations()
+
+type AnalysisCalculationsDI = Annotated[AnalysisCalculations, Depends(get_analysis_calculations)]
+
+def get_portfolio_analytics_service(
+    analysis_calculations: AnalysisCalculationsDI,
+    portfolio_repository: PortfolioRepositoryDI,
+    position_repository: PositionRepositoryDI,
+    market_data_service: MarketDataServiceDI,
+) -> PortfolioAnalyticsService:
+    """Dependency function to provide a PortfolioAnalyticsService instance."""
+    return PortfolioAnalyticsService(
+        analysis_calculations=analysis_calculations,
+        portfolio_repository=portfolio_repository,
+        position_repository=position_repository,
+        market_data_service=market_data_service,
+    )
+
+type PortfolioAnalyticsServiceDI = Annotated[
+    PortfolioAnalyticsService, Depends(get_portfolio_analytics_service)
 ]
 
 def get_pagination_params(

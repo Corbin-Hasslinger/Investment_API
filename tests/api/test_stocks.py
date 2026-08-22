@@ -27,7 +27,7 @@ def test_get_quote_returns_200_with_valid_data(client, override_dependency):
 
     assert response.status_code == 200
     assert response.json()["symbol"] == "AAPL"
-    assert response.json()["current_price"] == 150.25
+    assert response.json()["current_price"] == "150.25"
 
 
 def test_get_quote_returns_400_for_invalid_symbol(client, override_dependency):

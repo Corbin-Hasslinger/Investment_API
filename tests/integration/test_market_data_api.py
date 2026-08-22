@@ -42,13 +42,13 @@ def test_get_quote_uses_real_security_repository_and_mocked_finnhub(
     assert response.status_code == 200
     assert response.json() == {
         "symbol": security.symbol,
-        "current_price": 150.25,
-        "price_change": 2.50,
-        "percent_change": 1.69,
-        "high_price": 152.00,
-        "low_price": 149.50,
-        "open_price": 149.00,
-        "previous_close_price": 147.75,
+        "current_price": "150.25",
+        "price_change": "2.5",
+        "percent_change": "1.69",
+        "high_price": "152.0",
+        "low_price": "149.5",
+        "open_price": "149.0",
+        "previous_close_price": "147.75",
         "timestamp": 1692374400,
     }
     finnhub_client.get_quote.assert_awaited_once_with("AAPL")

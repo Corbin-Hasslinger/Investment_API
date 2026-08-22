@@ -252,7 +252,7 @@ resolve_security("msft")        → normalizes to "MSFT", creates new Security i
 
 ## Milestone 4: Portfolio Analytics
 
-**Status**: Planned
+**Status**: Complete
 
 Portfolio Analytics is the first milestone that combines portfolio positions,
 security resolution, and live market data into a user-facing calculation.
@@ -293,10 +293,10 @@ gain/loss percentage is `null` when total cost basis is zero.
 
 ### Implementation sequence
 
-1. Define analytics schemas and deterministic calculation tests.
-2. Implement read-only analytics data loading and ownership validation.
-3. Fetch quotes sequentially through `MarketDataService`.
-4. Calculate per-position metrics and portfolio totals.
-5. Add the analytics route, dependency wiring, and API tests.
-6. Optimize quote retrieval with concurrent async I/O after correctness is
-     established.
+1. [x] Define analytics schemas and deterministic calculation tests.
+2. [x] Implement read-only analytics data loading and ownership validation.
+3. [x] Fetch quotes through `MarketDataService`.
+4. [x] Calculate per-position metrics and portfolio totals.
+5. [x] Add the analytics route, dependency wiring, and API tests.
+6. [x] Optimize quote retrieval with concurrent async I/O after correctness is
+    established.

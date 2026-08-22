@@ -4,12 +4,18 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from atlas_api.di import CurrentUserDI, PaginationParamsDI, PortfolioServiceDI
+from atlas_api.di import (
+    CurrentUserDI,
+    PaginationParamsDI,
+    PortfolioAnalyticsServiceDI,
+    PortfolioServiceDI,
+)
+from atlas_api.schemas.analytics import PortfolioAnalyticsRead
 from atlas_api.schemas.portfolio import PortfolioCreate, PortfolioRead, PortfolioUpdate
 from atlas_api.tools.pagination import PaginatedResult
 
 router = APIRouter(
-    prefix="//portfolios",
+    prefix="/portfolios",
     tags=["Portfolios"],
 )
 
@@ -87,3 +93,23 @@ def delete_portfolio(
 ) -> None:
     """Deletes a specific portfolio by its ID."""
     service.delete_portfolio(portfolio_id, current_user.id)
+
+@router.get("/{portfolio_id}/analytics",
+            response_model=PortfolioAnalyticsRead,
+            summary="Get portfolio analytics for a specific portfolio",
+            status_code=status.HTTP_200_OK,
+            )
+async def get_portfolio_analytics(
+    portfolio_id: UUID,
+    service: PortfolioAnalyticsServiceDI,
+    current_user: CurrentUserDI,
+) -> PortfolioAnalyticsRead:
+    """Retrieves portfolio analytics for a specific portfolio.
+    Args:
+        portfolio_id (UUID): The ID of the portfolio.
+        service (PortfolioAnalyticsService): The portfolio analytics service instance.
+        current_user (CurrentUserRead): The current authenticated user.
+    Returns:
+        PortfolioAnalyticsRead: Analytics data for the specified portfolio.
+    """
+    return await service.get_portfolio_analytics(portfolio_id, current_user.id)

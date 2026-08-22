@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -45,9 +46,9 @@ class TestGetQuote:
 
         assert isinstance(result, StockQuote)
         assert result.symbol == "AAPL"
-        assert result.current_price == 150.25
-        assert result.price_change == 2.50
-        assert result.percent_change == 1.69
+        assert result.current_price == Decimal("150.25")
+        assert result.price_change == Decimal("2.50")
+        assert result.percent_change == Decimal("1.69")
         finnhub_client.get_quote.assert_called_once_with("AAPL")
 
     @pytest.mark.asyncio
