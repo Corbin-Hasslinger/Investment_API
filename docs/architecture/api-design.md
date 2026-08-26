@@ -344,21 +344,66 @@ Returns available financial metrics for the security.
 
 ### Screen Securities
 
-`POST /screeners`
+`POST /screeners/stocks`
 
-Returns securities matching user-defined criteria.
+Returns US-listed stocks matching Atlas-defined screening criteria.
 
-Possible criteria may include:
+Atlas owns the screening language. Users submit Atlas metrics and operators only; Tickerbot query syntax is an internal implementation detail.
 
-- Market capitalization
-- Price-to-earnings ratio
-- Dividend yield
-- Revenue growth
-- Return on equity
-- Sector
-- Security type
+The v1 screening contract uses a request body because the expression language is criterion-based and may grow beyond what a query string can safely represent.
 
-A request body is used because screening criteria may become too complex for a query string.
+#### Screening request shape
+
+- `criteria`: one to ten screening criteria, combined with `AND`
+- `sort_by`: one of the supported screening metrics
+- `sort_direction`: `asc` or `desc`
+- `limit`: page size, default `25`, maximum `100`
+- `cursor`: opaque pagination token returned by the provider
+
+#### Supported Atlas screening metrics
+
+- `market_cap`
+- `pe_ratio_ttm`
+- `price_to_book`
+- `price_to_sales_ttm`
+- `price_to_free_cash_flow_ttm`
+- `revenue_growth_yoy_percent`
+- `return_on_equity_ttm_percent`
+- `operating_margin_ttm_percent`
+- `net_margin_ttm_percent`
+- `current_ratio`
+- `debt_to_equity`
+- `beta`
+- `return_1_year_percent`
+
+#### Supported operators
+
+- `lt`
+- `lte`
+- `gt`
+- `gte`
+- `eq`
+
+#### Screen result shape
+
+The response returns a retrieval timestamp, the number of results on the current page, the next cursor, a list of matching stocks, and coverage metadata.
+
+- `as_of`: response timestamp
+- `returned_count`: number of rows in the current page
+- `next_cursor`: opaque pagination token or `null`
+- `results`: stock matches
+- `coverage`: null-coverage metadata for the screened metrics
+
+#### Verified provider notes
+
+Tickerbot was manually smoke-tested before the contract was locked.
+
+- `asset_class = stocks` is valid and is the locked universe scope for Atlas v1.
+- `asset_type = CS` is the observed common-stock value in the current provider response and is the current exclusion rule for funds and ETFs.
+- `market_cap` is returned as a raw dollar value.
+- Decimal-style provider fields such as `day_change_pct` and `gap_pct` are returned as decimal fractions, not percentage points.
+- Provider `null_coverage` reports how many rows were in scope, how many were evaluable, and how many were NULL for each predicate column.
+- Rows with NULL on a predicate column do not match that predicate.
 
 ## AI Analysis
 

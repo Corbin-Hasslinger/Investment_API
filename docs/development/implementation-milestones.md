@@ -610,3 +610,50 @@ Milestone 5 implementation is covered by schema, Finnhub client, service, API,
 and application-composition tests. The full project suite passes 179 tests.
 The composition test uses the real dependency graph with a mocked Finnhub
 client and verifies that research creates no Security or Position records.
+
+## Milestone 6: Stock Screening
+
+**Status**: Planned
+
+Milestone 6 adds Atlas-owned stock screening backed by Tickerbot execution.
+The key product decision is that Atlas owns the screening language and the
+public API never exposes raw Tickerbot query syntax.
+
+### Verified provider findings
+
+A manual smoke test confirmed the live provider behavior that this milestone
+depends on:
+
+- `asset_class=stocks` is accepted and should be the locked Atlas v1 universe.
+- `asset_type=CS` is the observed common-stock value in the current response and can be used as the current ETF exclusion rule.
+- `market_cap` is returned as a raw dollar amount.
+- `day_change_pct` and `gap_pct` are returned as decimal fractions.
+- `null_coverage` reports in-scope rows, evaluable rows, and NULL rows for each predicate column.
+- Rows with NULL on a predicate column are not evaluated and never match.
+
+### Product decisions
+
+- Public endpoint: `POST /screeners/stocks`
+- Atlas screening language: whitelisted metrics and operators only
+- Screen criteria: 1 to 10 criteria, combined with `AND`
+- Supported operators: `lt`, `lte`, `gt`, `gte`, `eq`
+- Supported v1 metrics: market cap, valuation, growth, profitability, leverage, beta, and one-year return
+- Pagination: opaque provider cursor
+- Default sort: market cap descending
+- Response contract: retrieval timestamp, returned count, next cursor, results, and coverage metadata
+- Data scope: read-only; no database table or Alembic migration
+
+### Implementation checklist
+
+- [ ] Add Tickerbot base URL configuration and env documentation
+- [ ] Capture the verified provider contract in the API design docs
+- [ ] Define `ScreenerMetric`, `ScreenerOperator`, and `SortDirection`
+- [ ] Define `StockScreenerCriterion` and `StockScreenerRequest`
+- [ ] Define `StockScreenerMetricsRead`, `StockScreenerResultRead`, `ScreenerMetricCoverageRead`, and `StockScreenerRead`
+- [ ] Add a central metric registry for Atlas-to-Tickerbot mappings
+- [ ] Implement `ScreenerQueryCompiler` with whitelisted metrics and operators only
+- [ ] Add `TickerbotClient` with bearer authentication and scan request handling
+- [ ] Add `ScreenerService` for query compilation and response transformation
+- [ ] Add `POST /screeners/stocks` router wiring and dependency injection
+- [ ] Add compiler, client, service, and API tests
+- [ ] Update system overview and remaining design docs after implementation

@@ -9,7 +9,7 @@ Atlas is a backend-first investment research platform built around a layered arc
 
 The system separates HTTP handling, application workflows, business logic, persistence, and external integrations so that each part can evolve independently.
 
-The API supports portfolio management, market-data retrieval, portfolio analytics, stock research, screening, and AI-powered explanations.
+The API supports portfolio management, market-data retrieval, portfolio analytics, stock research, stock screening, and AI-powered explanations.
 
 ## High-Level Architecture
 
@@ -35,6 +35,7 @@ Portfolio Domain   Analytics Domain   Research Domain   AI Workflows
           v                       v
       Database              External Providers
                             - Finnhub
+                            - Tickerbot
                             - OpenAI
                             - Future providers
 
@@ -142,6 +143,37 @@ Supports:
  - Company and ETF research
  - Financial-metric retrieval
  - Stock screening
+
+### Stock Screening Flow
+
+`POST /screeners/stocks`
+
+Stock screening is a read-only provider-backed workflow:
+
+```text
+Client
+        |
+        v
+Screening Router
+        |
+        v
+ScreenerService
+        |-- Atlas request validation
+        |-- ScreenerQueryCompiler
+        |-- Metric registry lookup
+        `-- TickerbotClient.scan
+                |-- POST /v2/scan
+                |-- asset_class=stocks
+                |-- asset_type=CS (verified provider behavior)
+                `-- null_coverage metadata
+        |
+        v
+StockScreenerRead
+```
+
+Atlas owns the screening vocabulary and operator set. Tickerbot is used only as the execution provider. The service compiles Atlas criteria into a provider-safe predicate, requests a fixed v1 metric set, and converts the provider response back into Atlas response models.
+
+The smoke test confirmed that provider percentage-like fields are exposed as decimal fractions and that predicate-column NULLs never match. Atlas should preserve that behavior and expose coverage metadata rather than pretending missing values are zeroes.
 
 ### Company Research Flow
 

@@ -34,6 +34,14 @@ class Settings(BaseSettings):
         default= None,
         validation_alias = AliasChoices("FINNHUB_API_KEY", "finnhub_api_key")
     )
+    tickerbot_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("TICKERBOT_API_KEY", "tickerbot_api_key")
+    )
+    tickerbot_base_url: str = Field(
+        default="https://api.tickerbot.io/v2",
+        validation_alias=AliasChoices("TICKERBOT_BASE_URL", "tickerbot_base_url"),
+    )
 
     model_config = SettingsConfigDict(
         env_file_encoding = "utf-8",
@@ -57,6 +65,10 @@ class Settings(BaseSettings):
         if  self.environment != "test" and not self.finnhub_api_key:
             raise ValueError(
                 "FINNHUB_API_KEY is required. Set it in .env or as an environment variable."
+            )
+        if  self.environment != "test" and not self.tickerbot_api_key:
+            raise ValueError(
+                "TICKERBOT_API_KEY is required. Set it in .env or as an environment variable."
             )
         if self.environment == "production" and not self.database_url:
             raise ValueError(
