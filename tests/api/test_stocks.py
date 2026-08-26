@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
 from atlas_api.di import get_market_data_service
@@ -11,13 +12,13 @@ def test_get_quote_returns_200_with_valid_data(client, override_dependency):
     market_data_service = MagicMock(spec=MarketDataService)
     market_data_service.get_quote = AsyncMock(return_value=StockQuote(
         symbol="AAPL",
-        current_price=150.25,
-        price_change=2.50,
-        percent_change=1.69,
-        high_price=152.00,
-        low_price=149.50,
-        open_price=149.00,
-        previous_close_price=147.75,
+        current_price=Decimal("150.25"),
+        price_change=Decimal("2.50"),
+        percent_change=Decimal("1.69"),
+        high_price=Decimal("152.00"),
+        low_price=Decimal("149.50"),
+        open_price=Decimal("149.00"),
+        previous_close_price=Decimal("147.75"),
         timestamp=1692374400,
     ))
 
@@ -56,4 +57,20 @@ def test_get_quote_returns_503_for_upstream_timeout(client, override_dependency)
     response = client.get("/market/quote/AAPL")
 
     assert response.status_code == 504
+
+
+def test_get_basic_financials_returns_raw_market_data_payload(client, override_dependency):
+    """GET /market/basic-financials/{ticker} returns the current raw service payload."""
+    market_data_service = MagicMock(spec=MarketDataService)
+    market_data_service.get_basic_financials = AsyncMock(
+        return_value={"metric": {"peTTM": 31.82, "epsTTM": 6.42}}
+    )
+
+    override_dependency(get_market_data_service, lambda: market_data_service)
+
+    response = client.get("/market/basic-financials/AAPL")
+
+    assert response.status_code == 200
+    assert response.json() == {"metric": {"peTTM": 31.82, "epsTTM": 6.42}}
+    market_data_service.get_basic_financials.assert_awaited_once_with("AAPL")
 

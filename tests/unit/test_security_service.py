@@ -102,7 +102,7 @@ class TestResolveSecurityWithMocks:
         """When Security missing but valid upstream, create and return it."""
         security_repository.get_security_by_symbol.return_value = None
         # Mock successful Finnhub response
-        finnhub_client.symbol_lookup = AsyncMock(return_value={
+        finnhub_client.get_company_profile = AsyncMock(return_value={
             "name": "Microsoft Corporation",
             "exchange": "NASDAQ",
             "currency": "USD",
@@ -131,7 +131,7 @@ class TestResolveSecurityWithMocks:
     ):
         """When Security missing and invalid upstream, raise UnsupportedSymbolError."""
         security_repository.get_security_by_symbol.return_value = None
-        finnhub_client.symbol_lookup = AsyncMock(side_effect=UnsupportedSymbolError(
+        finnhub_client.get_company_profile = AsyncMock(side_effect=UnsupportedSymbolError(
             "FAKEZZ not found on Finnhub"
         ))
 
@@ -149,7 +149,7 @@ class TestResolveSecurityWithMocks:
     ):
         """Incomplete upstream data must not be persisted as a Security."""
         security_repository.get_security_by_symbol.return_value = None
-        finnhub_client.symbol_lookup = AsyncMock(
+        finnhub_client.get_company_profile = AsyncMock(
             return_value={
                 "name": "Apple Inc.",
                 "exchange": "",

@@ -210,6 +210,106 @@ Each holding may include:
 
 Returns portfolio allocation information by holding and, when available, sector or industry.
 
+## Company Research
+
+Company Research is a read-only aggregate workflow that combines Finnhub
+Company Profile 2, Basic Financials, and Company News into one stable Atlas
+response. Research results are assembled dynamically and are not persisted.
+
+### Get Company Research
+
+`GET /research/company/{symbol}`
+
+Returns a company snapshot with five required sections:
+
+- `company` identifies the company and provides profile context.
+- `valuation` contains upstream-reported valuation ratios.
+- `performance` contains 52-week prices, beta, and stock returns.
+- `fundamentals` contains earnings, growth, profitability, and financial-health metrics.
+- `news` contains recent company articles.
+
+Only the normalized company symbol and company name are required within the
+company section. Optional company attributes and individual financial metrics
+are represented as `null` when Finnhub does not provide them. Missing metrics
+do not cause an otherwise valid research request to fail.
+
+Example response:
+
+```json
+{
+  "company": {
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "exchange": "NASDAQ",
+    "industry": "Technology",
+    "country": "US",
+    "currency": "USD",
+    "ipo_date": "1980-12-12",
+    "website": "https://www.apple.com/",
+    "logo_url": "https://static.finnhub.io/logo/example.png",
+    "market_cap": "3200120000.00",
+    "shares_outstanding": "15600500000.00"
+  },
+  "valuation": {
+    "pe_ratio_ttm": "31.82",
+    "price_to_book": "44.10",
+    "price_to_sales_ttm": "8.21",
+    "price_to_free_cash_flow_ttm": "29.35"
+  },
+  "performance": {
+    "fifty_two_week_high": "237.49",
+    "fifty_two_week_low": "164.08",
+    "beta": "1.23",
+    "return_3_month_percent": "4.57",
+    "return_1_year_percent": "18.11"
+  },
+  "fundamentals": {
+    "eps_ttm": "6.42",
+    "revenue_growth_yoy_percent": "4.20",
+    "eps_growth_yoy_percent": "7.11",
+    "gross_margin_percent": "45.50",
+    "operating_margin_percent": "30.20",
+    "net_margin_percent": "24.11",
+    "return_on_equity_percent": "160.20",
+    "current_ratio": "0.99",
+    "debt_to_equity": "1.55"
+  },
+  "news": [
+    {
+      "id": 123456,
+      "headline": "Apple announces results",
+      "source": "Reuters",
+      "summary": "Quarterly results released.",
+      "url": "https://example.com/news/apple-results",
+      "image_url": null,
+      "published_at": "2026-08-24T15:30:00Z"
+    }
+  ]
+}
+```
+
+All research financial values are represented with `Decimal`, rounded to two
+decimal places, and serialized as JSON strings. Finnhub Profile 2 reports
+market capitalization and shares outstanding in millions; Atlas converts
+these values to raw units before rounding.
+
+Company Research includes up to five of the most recent valid articles from
+the preceding seven days, ordered newest-first. No recent articles is a valid
+result represented by an empty `news` array.
+
+The company profile, Basic Financials, and Company News requests execute
+concurrently. A failure of any required upstream request fails the complete
+research request. Expected errors use the shared API error format:
+
+- Invalid symbol format returns `400 invalid_symbol_format`.
+- Unsupported symbol returns `400 unsupported_symbol`.
+- Finnhub rate limiting returns `429 upstream_rate_limited`.
+- Finnhub unavailability returns `503 upstream_unavailable`.
+- Finnhub timeout returns `504 upstream_timeout`.
+
+The workflow reuses canonical symbol normalization but does not resolve or
+persist a Security record. No database table or migration is required.
+
 ## Securities
 
 ### Search Securities

@@ -63,7 +63,7 @@ def test_post_position_resolves_security_and_persists_position(
 ) -> None:
     """POST positions composes ownership, security resolution, and persistence."""
     finnhub_client = MagicMock(spec=FinnhubClient)
-    finnhub_client.symbol_lookup = AsyncMock(
+    finnhub_client.get_company_profile = AsyncMock(
         return_value={
             "name": "Apple Inc.",
             "exchange": "NASDAQ",
@@ -108,4 +108,4 @@ def test_post_position_resolves_security_and_persists_position(
     assert created_security.currency == "USD"
     assert created_position.shares == 10.5
     assert created_position.average_cost == 150.25
-    finnhub_client.symbol_lookup.assert_awaited_once_with("AAPL")
+    finnhub_client.get_company_profile.assert_awaited_once_with("AAPL")

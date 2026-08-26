@@ -131,8 +131,9 @@ Portfolio Analytics Response
 
 The service loads all holdings, retrieves the required quotes, calculates
 per-position metrics and portfolio totals, then returns one consistent
-snapshot. Quote retrieval is initially implemented sequentially for
-correctness; asynchronous concurrent retrieval is a later optimization.
+snapshot. Independent quote requests are retrieved concurrently with
+`asyncio.gather()`. Any required quote failure fails the complete analytics
+request rather than returning inconsistent partial totals.
 
 ### Research Domain
 
@@ -141,6 +142,46 @@ Supports:
  - Company and ETF research
  - Financial-metric retrieval
  - Stock screening
+
+### Company Research Flow
+
+`GET /research/company/{symbol}`
+
+Company Research is a read-only aggregate workflow:
+
+```text
+Client
+        |
+        v
+Research Router
+        |
+        v
+ResearchService
+        |-- SecurityService.normalize_symbol
+        |-- Finnhub Company Profile 2 ----+
+        |-- Finnhub Basic Financials -----+--> explicit Atlas transformations
+        `-- Finnhub Company News ---------+             |
+                                                        v
+                                               CompanyResearchRead
+```
+
+`ResearchService` normalizes the requested symbol once, calculates the
+seven-day news window, and starts the three independent Finnhub requests
+concurrently with `asyncio.gather()`. Basic Financials is fetched once and its
+metric object is projected into valuation, performance, and fundamental
+response sections.
+
+The service validates that Profile 2 identifies the requested company and
+then explicitly maps Finnhub fields into Atlas response schemas. Missing
+optional profile fields and individual financial metrics become `null`. News
+records are normalized, ordered newest-first, and limited to five; no recent
+news produces an empty list.
+
+Company Research reuses only `SecurityService.normalize_symbol()`. It does not
+call `SecurityService.resolve_security()`, access a repository, create a
+Security record, or perform any other database write. Research data is
+assembled dynamically, so this workflow requires no database table or
+migration.
 
 ## Persistence Layer
 
@@ -175,11 +216,16 @@ Finnhub provides:
  - Quotes
  - Company profiles
  - Financial metrics
+ - Company news
  - Market status
  - Historical market data
  - Live trade data through WebSocket connections
 
-The Finnhub client is accessed through an internal market-data abstraction so the rest of Atlas does not depend on Finnhub-specific response formats.
+The Finnhub client owns HTTP requests, authentication, JSON decoding, and
+shared upstream-error translation. Application services call its
+endpoint-specific methods and explicitly transform provider payloads into
+Atlas response schemas, preventing Finnhub field names from becoming the
+public Atlas contract.
 
 ### OpenAI Integration
 
@@ -310,6 +356,7 @@ Examples include:
 - Unsupported security
 - Market-data provider failure
 - Temporarily unavailable quote data
+- Upstream rate limiting, unavailability, and timeout
 - AI-provider failure
 
 ## Data Freshness

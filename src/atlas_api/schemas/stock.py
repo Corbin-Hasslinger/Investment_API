@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+
+from decimal import Decimal
 
 from pydantic import BaseModel
-from decimal import Decimal
 
 
 class StockQuote(BaseModel):

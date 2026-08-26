@@ -61,7 +61,7 @@ class SecurityService:
         if security:
             return self._to_read(security)
         
-        security_info = await self.finnhub_client.symbol_lookup(normalized)
+        security_info = await self.finnhub_client.get_company_profile(normalized)
         if not security_info:
             raise UnsupportedSymbolError(
                 f"Symbol '{normalized}' is not supported by Finnhub."
@@ -76,9 +76,9 @@ class SecurityService:
         security = self.security_repository.create_security(
             Security(
                 symbol=normalized,
-                name=security_info["name"],
-                exchange=security_info["exchange"],
-                currency=security_info["currency"],
+                name=str(security_info["name"]),
+                exchange=str(security_info["exchange"]),
+                currency=str(security_info["currency"]),
             )
         )
         self.security_repository.commit()

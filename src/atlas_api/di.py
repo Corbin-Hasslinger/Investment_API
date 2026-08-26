@@ -7,6 +7,7 @@ from sqlmodel import Session
 from atlas_api.services.analysis_calculations import AnalysisCalculations
 from atlas_api.services.market_data_service import MarketDataService
 from atlas_api.services.portfolio_analytics_service import PortfolioAnalyticsService
+from atlas_api.services.research_service import ResearchService
 from atlas_api.services.security_service import SecurityService
 
 from .clients.finnhub_client import FinnhubClient
@@ -31,6 +32,7 @@ __all__ = [
     "PortfolioServiceDI",
     "PositionRepositoryDI",
     "PositionServiceDI",
+    "ResearchServiceDI",
     "SecurityRepositoryDI",
     "SecurityServiceDI",
     "SessionDI",
@@ -156,6 +158,16 @@ def get_portfolio_analytics_service(
 type PortfolioAnalyticsServiceDI = Annotated[
     PortfolioAnalyticsService, Depends(get_portfolio_analytics_service)
 ]
+def get_research_service(
+        finnhub_client: FinnhubClientDI,
+        security_service: SecurityServiceDI
+) -> ResearchService:
+    """Dependency function to provide a ResearchService instance."""
+    return ResearchService(
+        finnhub_client=finnhub_client,
+        security_service=security_service,
+    )
+type ResearchServiceDI = Annotated[ResearchService, Depends(get_research_service)]
 
 def get_pagination_params(
         page: Annotated[int, Query(ge=1)] =1,

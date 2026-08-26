@@ -295,3 +295,318 @@ gain/loss percentage is `null` when total cost basis is zero.
 5. [x] Add the analytics route, dependency wiring, and API tests.
 6. [x] Optimize quote retrieval with concurrent async I/O after correctness is
     established.
+
+## Milestone 5: Company Research
+
+**Status**: Complete
+
+Company Research introduces a read-only application workflow that combines
+multiple Finnhub datasets into one beginner-friendly company snapshot.
+
+### Initial endpoint
+
+`GET /research/company/{symbol}`
+
+The endpoint combines:
+
+- Company Profile 2 for company identity and context.
+- Basic Financials for valuation, performance, and fundamental metrics.
+- Company News for recent company-specific events.
+
+The response is assembled dynamically for each request. Milestone 5 does not
+add a database table, persist research results, or require an Alembic
+migration.
+
+### Public response contract
+
+The v1 response is represented by `CompanyResearchRead`:
+
+```text
+CompanyResearchRead
+|-- company: CompanyOverviewRead
+|   `-- Who is this company?
+|-- valuation: ValuationMetricsRead
+|   `-- How is the market valuing it?
+|-- performance: PerformanceMetricsRead
+|   `-- How has the stock behaved?
+|-- fundamentals: FundamentalMetricsRead
+|   `-- How is the business performing?
+`-- news: list[CompanyNewsRead]
+        `-- What has happened recently?
+```
+
+Only the normalized company `symbol` and company `name` are required identity
+fields. All other company attributes and all individual financial metrics are
+nullable because Finnhub coverage varies by company and metric.
+
+#### Company overview
+
+`CompanyOverviewRead` contains:
+
+- Symbol and company name.
+- Exchange, industry, country, and reporting currency.
+- IPO date, website, and logo URL.
+- Market capitalization and shares outstanding.
+
+The Profile 2 response must contain enough data to identify the requested
+company. A missing symbol or name causes the workflow to raise
+`UnsupportedSymbolError`.
+
+#### Valuation metrics
+
+`ValuationMetricsRead` contains:
+
+- Trailing price-to-earnings ratio.
+- Price-to-book ratio.
+- Trailing price-to-sales ratio.
+- Trailing price-to-free-cash-flow ratio.
+
+These are upstream-reported metrics. Atlas does not calculate substitute
+values when Finnhub omits them.
+
+#### Performance metrics
+
+`PerformanceMetricsRead` contains:
+
+- 52-week high and low.
+- Beta.
+- Three-month and one-year return percentages.
+
+The return fields map to Finnhub's `13WeekPriceReturnDaily` and
+`52WeekPriceReturnDaily` metrics. Finnhub reports these values as percentages,
+so Atlas rounds them without multiplying by 100.
+
+#### Fundamental metrics
+
+`FundamentalMetricsRead` contains:
+
+- Trailing earnings per share.
+- Year-over-year revenue and earnings-per-share growth.
+- Gross, operating, and net margin percentages.
+- Return on equity.
+- Current ratio.
+- Debt-to-equity ratio.
+
+These fields provide a compact view of earnings, growth, profitability,
+efficiency, and financial health.
+
+#### Company news
+
+`CompanyNewsRead` contains:
+
+- Finnhub article identifier.
+- Headline and source.
+- Optional summary and image URL.
+- Article URL.
+- Timezone-aware publication timestamp.
+
+Company Research returns up to five of the most recent available articles from
+the preceding seven days. Articles are ordered from newest to oldest. No
+recent articles is a successful result represented by an empty list.
+
+### Finnhub mapping policy
+
+Atlas schemas and Finnhub responses are deliberately decoupled. Finnhub field
+names must be explicitly transformed into the public response models rather
+than unpacked directly into them.
+
+Before implementing a metric mapping:
+
+1. Inspect an actual Finnhub response.
+2. Record the exact field name and observed value type.
+3. Confirm the value's unit, especially for percentages and ratios.
+4. Define missing and malformed value behavior.
+5. Add a focused transformation test.
+
+Unverified mappings remain `null`; Atlas does not invent field names or derive
+upstream-reported metrics.
+
+### Verified Finnhub mappings
+
+The mappings were inspected using representative Profile 2 and Basic
+Financials responses for AAPL, JPM, and KO.
+
+#### Company Profile 2
+
+| Atlas field | Finnhub key | Transformation |
+|---|---|---|
+| `symbol` | `ticker` | Trim, uppercase, and verify against the normalized request symbol |
+| `name` | `name` | Require a non-empty string |
+| `exchange` | `exchange` | Empty or missing value becomes `null` |
+| `industry` | `finnhubIndustry` | Empty or missing value becomes `null` |
+| `country` | `country` | Empty or missing value becomes `null` |
+| `currency` | `currency` | Empty or missing value becomes `null` |
+| `ipo_date` | `ipo` | Parse an ISO date; invalid or missing value becomes `null` |
+| `website` | `weburl` | Empty or missing value becomes `null` |
+| `logo_url` | `logo` | Empty or missing value becomes `null` |
+| `market_cap` | `marketCapitalization` | Convert millions to raw units, then round to two places |
+| `shares_outstanding` | `shareOutstanding` | Convert millions to raw units, then round to two places |
+
+The Finnhub `phone` field is intentionally excluded from the v1 contract. A
+profile is supported only when it has a non-empty `ticker` and `name`, and the
+profile ticker matches the normalized requested symbol.
+
+#### Basic Financials
+
+| Atlas field | Finnhub metric key |
+|---|---|
+| `pe_ratio_ttm` | `peTTM` |
+| `price_to_book` | `pb` |
+| `price_to_sales_ttm` | `psTTM` |
+| `price_to_free_cash_flow_ttm` | `pfcfShareTTM` |
+| `fifty_two_week_high` | `52WeekHigh` |
+| `fifty_two_week_low` | `52WeekLow` |
+| `beta` | `beta` |
+| `return_3_month_percent` | `13WeekPriceReturnDaily` |
+| `return_1_year_percent` | `52WeekPriceReturnDaily` |
+| `eps_ttm` | `epsTTM` |
+| `revenue_growth_yoy_percent` | `revenueGrowthTTMYoy` |
+| `eps_growth_yoy_percent` | `epsGrowthTTMYoy` |
+| `gross_margin_percent` | `grossMarginTTM` |
+| `operating_margin_percent` | `operatingMarginTTM` |
+| `net_margin_percent` | `netProfitMarginTTM` |
+| `return_on_equity_percent` | `roeTTM` |
+| `current_ratio` | `currentRatioQuarterly` |
+| `debt_to_equity` | `totalDebt/totalEquityQuarterly` |
+
+Each metric is transformed independently. A missing or `null` Finnhub metric
+becomes `null` in Atlas without affecting the other response sections.
+
+#### Company News
+
+| Atlas field | Finnhub key | Transformation |
+|---|---|---|
+| `id` | `id` | Require an integer |
+| `headline` | `headline` | Require a non-empty string |
+| `source` | `source` | Require a non-empty string |
+| `summary` | `summary` | Empty or missing value becomes `null` |
+| `url` | `url` | Require a non-empty string |
+| `image_url` | `image` | Empty or missing value becomes `null` |
+| `published_at` | `datetime` | Convert Unix seconds to a timezone-aware UTC datetime |
+
+Malformed news records are skipped. Valid records are sorted newest-first and
+limited to five.
+
+### Numeric conversion policy
+
+Research financial values use `Decimal | None`. Finnhub may return numbers as
+integers, floats, numeric strings, or `null`. Non-null values are converted
+through their string representation so Python binary floating-point artifacts
+are not preserved:
+
+```text
+Decimal(str(value))
+```
+
+A numeric zero is a valid value and must not be treated as missing. Research
+metrics are rounded to two decimal places using the same decimal quantization
+policy as Portfolio Analytics. Profile capitalization and outstanding-share
+values are multiplied by one million before rounding so unit conversion does
+not discard source precision.
+
+### Application workflow
+
+`ResearchService.get_company_research(symbol)` owns the complete use case:
+
+```text
+Raw symbol
+        |
+        v
+SecurityService.normalize_symbol
+        |
+        +--> Finnhub Company Profile 2 ---+
+        +--> Finnhub Basic Financials ----+--> explicit transformations
+        `--> Finnhub Company News --------+             |
+                                                                                                     v
+                                                                                    CompanyResearchRead
+```
+
+The three Finnhub requests do not depend on one another and are retrieved
+concurrently with `asyncio.gather()`. `ResearchService` reuses
+`SecurityService.normalize_symbol()` but must not call
+`SecurityService.resolve_security()` because resolution may write a Security
+record to the database.
+
+### Partial-data and failure policy
+
+- Missing company identity fails the request with `UnsupportedSymbolError`.
+- Missing optional company fields are represented as `null`.
+- Missing individual financial metrics are represented as `null` and do not
+    fail the request.
+- No recent news is represented as an empty list.
+- A timeout, rate limit, unavailable upstream, or other required request
+    failure fails the complete company-research request.
+- Existing global exception handlers translate application and upstream
+    errors at the HTTP boundary.
+
+### Layer responsibilities
+
+#### FinnhubClient
+
+- Constructs endpoint-specific requests.
+- Supplies authentication and timeout settings.
+- Parses JSON responses.
+- Maps shared timeout, rate-limit, and availability failures.
+- Does not interpret Atlas metrics or apply product rules.
+
+#### ResearchService
+
+- Reuses canonical symbol normalization.
+- Defines the seven-day news window and five-article limit.
+- Coordinates concurrent upstream retrieval.
+- Validates required company identity.
+- Explicitly transforms provider data into Atlas schemas.
+- Performs no database writes.
+
+#### Research router
+
+- Receives the path symbol.
+- Calls `ResearchService`.
+- Returns `CompanyResearchRead`.
+- Does not interpret Finnhub responses or translate exceptions.
+
+### Implementation sequence
+
+1. [x] Define and test the six company-research response schemas.
+2. [x] Inspect actual Profile 2, Basic Financials, and Company News responses.
+3. [x] Record and verify explicit Finnhub-to-Atlas field mappings.
+4. [x] Add Basic Financials and Company News methods to `FinnhubClient`.
+5. [x] Add endpoint-specific Finnhub client tests.
+6. [x] Implement deterministic profile, metric, and news transformations.
+7. [x] Implement concurrent orchestration in `ResearchService`.
+8. [x] Test complete, partial-data, news-ordering, and upstream-failure cases.
+9. [x] Wire `ResearchService` into dependency injection.
+10. [x] Add and register the company-research router.
+11. [x] Add API and application-composition tests without live Finnhub calls.
+12. [x] Update system architecture documentation.
+
+### Definition of done
+
+- [x] `CompanyOverviewRead` is implemented and tested.
+- [x] `ValuationMetricsRead` is implemented and tested.
+- [x] `PerformanceMetricsRead` is implemented and tested.
+- [x] `FundamentalMetricsRead` is implemented and tested.
+- [x] `CompanyNewsRead` is implemented and tested.
+- [x] `CompanyResearchRead` is implemented and tested.
+- [x] Profile 2 mappings are verified against an actual response.
+- [x] Basic Financials mappings are verified against actual responses.
+- [x] Company News mappings are verified.
+- [x] Finnhub Basic Financials and Company News methods are implemented.
+- [x] All three upstream datasets are retrieved concurrently.
+- [x] Financial values are converted safely to `Decimal` and rounded to two places.
+- [x] Missing optional metrics produce `null` without failing the request.
+- [x] News is newest-first, limited to five, and may be empty.
+- [x] Research performs no database writes.
+- [x] `ResearchService` is available through dependency injection.
+- [x] `GET /research/company/{symbol}` is registered with its response model.
+- [x] Service, client, API, and composition tests cover success and failures.
+- [x] API design and milestone documentation are current.
+- [x] System overview documentation is current.
+- [x] No database migration is introduced for company research.
+
+### Completion notes
+
+Milestone 5 implementation is covered by schema, Finnhub client, service, API,
+and application-composition tests. The full project suite passes 179 tests.
+The composition test uses the real dependency graph with a mocked Finnhub
+client and verifies that research creates no Security or Position records.

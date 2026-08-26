@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from fastapi import APIRouter
 
@@ -25,3 +26,16 @@ async def get_stock_quote(
     ) -> StockQuote:
     """ Returns a formatted stock quote for the given ticker symbol, using the Finnhub API. """
     return await market_service.get_quote(symbol)
+
+# @router.get(
+#     "/basic-financials/{symbol}",
+#     response_model=dict[str, Any],
+#     summary="Get basic financials for a given ticker symbol",
+#     response_description="The basic financials for the given ticker symbol",
+#     )
+# async def get_basic_financials(
+#     symbol: str,
+#     market_service: MarketDataServiceDI
+#     ) -> dict[str, Any]:
+#     """ Returns the basic financials for the given ticker symbol, using the Finnhub API. """
+#     return await market_service.get_basic_financials(symbol)

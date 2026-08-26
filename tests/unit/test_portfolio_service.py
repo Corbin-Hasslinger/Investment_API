@@ -8,12 +8,12 @@ from atlas_api.models.portfolios import Portfolio
 from atlas_api.repositories.portfolio_repository import PortfolioRepository
 from atlas_api.schemas.portfolio import PortfolioCreate, PortfolioRead, PortfolioUpdate
 from atlas_api.services.portfolio_service import PortfolioService
-from atlas_api.tools.pagination import PaginationParams
 from atlas_api.tools.errors import (
     InvalidPortfolioDataError,
     PortfolioAlreadyExistsError,
     PortfolioNotFoundError,
 )
+from atlas_api.tools.pagination import PaginationParams
 
 
 def build_portfolio(
