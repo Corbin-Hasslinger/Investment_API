@@ -13,8 +13,9 @@ class ScreenerMetricDefinition:
     input_scale: Decimal = NO_SCALE
     output_scale: Decimal = NO_SCALE
 
-SCREENER_METRICS: dict[ScreenerMetric,
-                       ScreenerMetricDefinition
+SCREENER_METRICS: dict[
+    ScreenerMetric,
+    ScreenerMetricDefinition
 ] = {
     ScreenerMetric.MARKET_CAP: ScreenerMetricDefinition(
         provider_field="market_cap",
@@ -74,5 +75,5 @@ def get_metric_definition(
 def get_provider_field(
         metric: ScreenerMetric,
 ) -> str:
-    return SCREENER_METRICS[metric].provider_field
+    return get_metric_definition(metric).provider_field
 

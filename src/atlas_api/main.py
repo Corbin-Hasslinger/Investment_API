@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from atlas_api.core.config import Settings, get_settings
 from atlas_api.routes import API_ROUTERS
 
-from .tools.errors import (
+from .tools import (
     InvalidPortfolioDataError,
     InvalidPositionDataError,
     InvalidSecurityDataError,
@@ -19,6 +19,7 @@ from .tools.errors import (
     SecurityNotFoundError,
     UnsupportedSymbolError,
     UpstreamRateLimitedError,
+    UpstreamResponseError,
     UpstreamTimeoutError,
     UpstreamUnavailableError,
 )
@@ -132,6 +133,12 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"error": {"code": "upstream_unavailable", "message": str(exc) or "Upstream API unavailable"}},
         )    
+    @app.exception_handler(UpstreamResponseError)
+    async def handle_upstream_response_error(_: Request, exc: UpstreamResponseError):
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            content={"error": {"code": "upstream_response_error", "message": str(exc) or "Upstream API returned an unexpected response"}},
+        )
 
 def register_lifecycle_hooks(app: FastAPI) -> None:
     """Register lifecycle hooks for the FastAPI application."""

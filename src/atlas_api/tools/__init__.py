@@ -11,6 +11,7 @@ from .errors import (
     SecurityNotFoundError,
     UnsupportedSymbolError,
     UpstreamRateLimitedError,
+    UpstreamResponseError,
     UpstreamTimeoutError,
     UpstreamUnavailableError,
 )
@@ -31,6 +32,7 @@ __all__ = [
     "SecurityNotFoundError",
     "UnsupportedSymbolError",
     "UpstreamRateLimitedError",
+    "UpstreamResponseError",
     "UpstreamTimeoutError",
     "UpstreamUnavailableError"
 ]

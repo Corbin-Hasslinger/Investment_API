@@ -53,3 +53,6 @@ class UpstreamRateLimitedError(Exception):
 
 class UpstreamUnavailableError(Exception):
     """Exception raised when an upstream API is unavailable."""
+
+class UpstreamResponseError(Exception):
+    """Exception raised when an upstream API returns an unexpected response."""

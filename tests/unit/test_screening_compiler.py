@@ -118,7 +118,7 @@ def test_compile_query_uses_provider_names_when_atlas_metric_names_differ() -> N
     )
 
     assert "price_to_sales < 5" in query
-    assert "change_1y >= 0.12" in query
+    assert "change_1y >= 12" in query
     assert "price_to_sales_ttm" not in query
     assert "return_1_year_percent" not in query
 
