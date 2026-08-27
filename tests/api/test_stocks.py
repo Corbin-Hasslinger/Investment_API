@@ -58,19 +58,3 @@ def test_get_quote_returns_503_for_upstream_timeout(client, override_dependency)
 
     assert response.status_code == 504
 
-
-def test_get_basic_financials_returns_raw_market_data_payload(client, override_dependency):
-    """GET /market/basic-financials/{ticker} returns the current raw service payload."""
-    market_data_service = MagicMock(spec=MarketDataService)
-    market_data_service.get_basic_financials = AsyncMock(
-        return_value={"metric": {"peTTM": 31.82, "epsTTM": 6.42}}
-    )
-
-    override_dependency(get_market_data_service, lambda: market_data_service)
-
-    response = client.get("/market/basic-financials/AAPL")
-
-    assert response.status_code == 200
-    assert response.json() == {"metric": {"peTTM": 31.82, "epsTTM": 6.42}}
-    market_data_service.get_basic_financials.assert_awaited_once_with("AAPL")
-

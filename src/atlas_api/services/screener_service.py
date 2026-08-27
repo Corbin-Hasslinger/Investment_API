@@ -12,6 +12,7 @@ from atlas_api.schemas.stock import (
 )
 from atlas_api.screening.compiler import ScreenerQueryCompiler
 from atlas_api.screening.metrics import (
+    RATIO_TO_PERCENT,
     SCREENER_METRICS,
     get_metric_definition,
     get_provider_field,
@@ -51,11 +52,14 @@ class ScreenerService:
         if not isinstance(value, (int, float, str)):
             raise UpstreamResponseError("Tickerbot returned an invalid numeric value.")
         try:
-            return Decimal(str(value)) * scale
+            result = Decimal(str(value)) * scale
         except InvalidOperation as esc:
             raise UpstreamResponseError(
                 "Tickerbot returned an invalid numeric value."
             ) from esc
+        if not result.is_finite():
+            raise UpstreamResponseError("Tickerbot returned an invalid numeric value.")
+        return result
 
     def _metric_value(self, row: JsonObject, metric: ScreenerMetric) -> Decimal | None:
         definition = get_metric_definition(metric)
@@ -141,14 +145,17 @@ class ScreenerService:
     def _parse_as_of(self, provider_response: JsonObject) -> datetime:
         raw_value = self._require_str(provider_response, "as_of")
         try:
-            return datetime.fromisoformat(raw_value)
+            parsed = datetime.fromisoformat(raw_value)
         except ValueError as exc:
             raise UpstreamResponseError(
                 "Tickerbot returned an invalid 'as_of' value."
             ) from exc
+        if parsed.tzinfo is None:
+            raise UpstreamResponseError("Tickerbot returned an invalid 'as_of' value.")
+        return parsed
 
     def _build_coverage(
-        self, provider_response: JsonObject, metrics: set[ScreenerMetric]
+        self, provider_response: JsonObject, metrics: list[ScreenerMetric]
     ) -> list[ScreenerMetricCoverageRead]:
         meta = provider_response.get("_meta")
         null_coverage = meta.get("null_coverage") if isinstance(meta, dict) else None
@@ -168,7 +175,9 @@ class ScreenerService:
         for metric in metrics:
             entry = columns.get(get_provider_field(metric))
             if not isinstance(entry, dict):
-                continue
+                raise UpstreamResponseError(
+                    "Tickerbot returned incomplete metric coverage."
+                )
             coverage.append(
                 ScreenerMetricCoverageRead(
                     metric=metric,
@@ -185,7 +194,7 @@ class ScreenerService:
             name=self._require_str(row, "name"),
             price=self._normalize_decimal(row.get("price")),
             day_change_percent=self._normalize_decimal(
-                row.get("day_change_pct"), scale=Decimal(100)
+                row.get("day_change_pct"), scale=RATIO_TO_PERCENT
             ),
             sector=self._optional_str(row, "sector"),
             industry=self._optional_str(row, "industry"),
@@ -214,7 +223,9 @@ class ScreenerService:
                 "Tickerbot returned an invalid 'next_cursor' value."
             )
 
-        requested_metrics = {criterion.metric for criterion in request.criteria}
+        requested_metrics = list(
+            dict.fromkeys(criterion.metric for criterion in request.criteria)
+        )
         coverage = self._build_coverage(provider_response, requested_metrics)
 
         return StockScreenerRead(

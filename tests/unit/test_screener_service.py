@@ -142,9 +142,9 @@ async def test_screen_stocks_converts_every_percentage_metric(
 
     metrics = result.results[0].metrics
     assert metrics.revenue_growth_yoy_percent == Decimal("12.5")
-    assert metrics.return_on_equity_ttm_percent == Decimal("18")
-    assert metrics.operating_margin_ttm_percent == Decimal("25")
-    assert metrics.net_margin_ttm_percent == Decimal("20")
+    assert metrics.return_on_equity_ttm_percent == Decimal(18)
+    assert metrics.operating_margin_ttm_percent == Decimal(25)
+    assert metrics.net_margin_ttm_percent == Decimal(20)
     assert metrics.return_1_year_percent == Decimal("0.30")
 
 
@@ -309,6 +309,29 @@ async def test_screen_stocks_rejects_invalid_metric_value_shape(
                 "market_cap": {"weird": "object"},
             }
         ]
+    )
+
+    with pytest.raises(UpstreamResponseError):
+        await service.screen_stocks(build_request())
+
+
+@pytest.mark.asyncio
+async def test_screen_stocks_rejects_missing_requested_coverage(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    tickerbot_client.scan.return_value = build_provider_response(
+        _meta={
+            "null_coverage": {
+                "in_scope_rows": 5000,
+                "columns": {
+                    "asset_type": {
+                        "null_rows": 0,
+                        "evaluable_rows": 5000,
+                    }
+                },
+            }
+        }
     )
 
     with pytest.raises(UpstreamResponseError):
