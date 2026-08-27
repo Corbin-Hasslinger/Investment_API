@@ -619,6 +619,19 @@ Milestone 6 adds Atlas-owned stock screening backed by Tickerbot execution.
 The key product decision is that Atlas owns the screening language and the
 public API never exposes raw Tickerbot query syntax.
 
+### External Provider Configuration
+
+Atlas uses environment-based configuration for external provider credentials.
+
+The following variables are used by the stock-screening integration:
+
+- `TICKERBOT_API_KEY`: Tickerbot API credential. Required in non-test environments.
+- `TICKERBOT_BASE_URL`: Base URL used for Tickerbot API requests. Defaults to `https://api.tickerbot.io/v2`.
+
+Provider credentials must be supplied through environment variables or a local
+`.env` file and must not be committed to source control. Tests do not require a
+live Tickerbot API key because provider interactions are mocked.
+
 ### Verified provider findings
 
 A manual smoke test confirmed the live provider behavior that this milestone
@@ -645,11 +658,12 @@ depends on:
 
 ### Implementation checklist
 
-- [ ] Add Tickerbot base URL configuration and env documentation
-- [ ] Capture the verified provider contract in the API design docs
-- [ ] Define `ScreenerMetric`, `ScreenerOperator`, and `SortDirection`
-- [ ] Define `StockScreenerCriterion` and `StockScreenerRequest`
-- [ ] Define `StockScreenerMetricsRead`, `StockScreenerResultRead`, `ScreenerMetricCoverageRead`, and `StockScreenerRead`
+- [x] Add Tickerbot base URL configuration and env documentation
+- [x] Capture the verified provider contract in the API design docs
+- [x] Define `ScreenerMetric`, `ScreenerOperator`, and `SortDirection`
+- [x] Define `StockScreenerCriterion` and `StockScreenerRequest`
+- [x] Define `StockScreenerMetricsRead`, `StockScreenerResultRead`, `ScreenerMetricCoverageRead`, and `StockScreenerRead`
+- [x] Add request and response schema validation tests
 - [ ] Add a central metric registry for Atlas-to-Tickerbot mappings
 - [ ] Implement `ScreenerQueryCompiler` with whitelisted metrics and operators only
 - [ ] Add `TickerbotClient` with bearer authentication and scan request handling

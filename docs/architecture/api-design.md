@@ -360,6 +360,56 @@ The v1 screening contract uses a request body because the expression language is
 - `limit`: page size, default `25`, maximum `100`
 - `cursor`: opaque pagination token returned by the provider
 
+#### Screening criterion shape
+
+Each entry in `criteria` contains:
+
+- `metric`: an Atlas-defined screening metric
+- `operator`: one of the supported comparison operators
+- `value`: a finite numeric value used by the comparison
+
+Example:
+
+```json
+{
+  "metric": "market_cap",
+  "operator": "gte",
+  "value": 10000000000
+}
+```
+
+All criteria in the v1 contract are combined using logical `AND`. Clients
+cannot submit raw Tickerbot field names, predicates, or query expressions.
+Atlas validates the requested metric and operator before any provider query
+is constructed.
+
+A complete request may therefore look like:
+
+```json
+{
+  "criteria": [
+    {
+      "metric": "market_cap",
+      "operator": "gte",
+      "value": 10000000000
+    },
+    {
+      "metric": "pe_ratio_ttm",
+      "operator": "lte",
+      "value": 25
+    }
+  ],
+  "sort_by": "market_cap",
+  "sort_direction": "desc",
+  "limit": 25,
+  "cursor": null
+}
+```
+
+This requests common stocks with a market capitalization of at least $10
+billion and a trailing P/E ratio no greater than 25, ordered by market
+capitalization from largest to smallest.
+
 #### Supported Atlas screening metrics
 
 - `market_cap`
@@ -375,6 +425,34 @@ The v1 screening contract uses a request body because the expression language is
 - `debt_to_equity`
 - `beta`
 - `return_1_year_percent`
+
+#### Screening metric semantics
+
+Atlas exposes its own metric names and units independently of the underlying
+screening provider.
+
+The following metrics use their natural numeric values:
+
+- `market_cap`: market capitalization in US dollars
+- `pe_ratio_ttm`: trailing price-to-earnings ratio
+- `price_to_book`: price-to-book ratio
+- `price_to_sales_ttm`: trailing price-to-sales ratio
+- `price_to_free_cash_flow_ttm`: trailing price-to-free-cash-flow ratio
+- `current_ratio`: current assets divided by current liabilities
+- `debt_to_equity`: debt-to-equity ratio
+- `beta`: equity beta
+
+Metrics whose names end in `_percent` are expressed as percentage points in
+the public API. For example, `10 = 10%`, `15.5 = 15.5%`, and `-8 = -8%`.
+This applies to `revenue_growth_yoy_percent`,
+`return_on_equity_ttm_percent`, `operating_margin_ttm_percent`,
+`net_margin_ttm_percent`, and `return_1_year_percent`. The same convention
+is used for percentage-valued fields returned in screening results, including
+`day_change_percent`.
+
+Provider-specific representations are normalized internally by Atlas. Clients
+do not need to know whether the underlying provider represents a percentage as
+a fraction or as percentage points.
 
 #### Supported operators
 
@@ -394,6 +472,91 @@ The response returns a retrieval timestamp, the number of results on the current
 - `results`: stock matches
 - `coverage`: null-coverage metadata for the screened metrics
 
+Each entry in `results` represents one matching stock and contains:
+
+- `symbol`: security ticker
+- `name`: company/security name
+- `price`: current or provider-reported screening price when available
+- `day_change_percent`: daily percentage price change when available
+- `sector`: sector classification when available
+- `industry`: industry classification when available
+- `metrics`: the Atlas screening metrics associated with the result
+
+Metric values may be `null` when the provider does not have sufficient data
+for a security. Atlas does not convert missing financial data to zero.
+
+The `coverage` collection describes data availability for metrics involved in
+screening. Each coverage entry contains:
+
+- `metric`: Atlas screening metric
+- `in_scope`: number of securities considered within the screening universe
+- `evaluable`: number of securities with sufficient data to evaluate the metric
+- `missing`: number of securities for which the metric was unavailable
+
+A security with a missing value for a criterion cannot satisfy that criterion.
+The `next_cursor` value is opaque. Clients should return it unchanged when
+requesting the next page and should not inspect, modify, or construct cursor
+values themselves.
+
+Example response:
+
+```json
+{
+  "as_of": "2026-08-26T21:30:00-04:00",
+  "returned_count": 1,
+  "next_cursor": null,
+  "results": [
+    {
+      "symbol": "EXAMPLE",
+      "name": "Example Corporation",
+      "price": 125.50,
+      "day_change_percent": 1.25,
+      "sector": "Technology",
+      "industry": "Software",
+      "metrics": {
+        "market_cap": 12500000000,
+        "pe_ratio_ttm": 22.4,
+        "price_to_book": 5.1,
+        "price_to_sales_ttm": 4.2,
+        "price_to_free_cash_flow_ttm": 19.7,
+        "revenue_growth_yoy_percent": 12.5,
+        "return_on_equity_ttm_percent": 18.2,
+        "operating_margin_ttm_percent": 21.3,
+        "net_margin_ttm_percent": 16.4,
+        "current_ratio": 1.8,
+        "debt_to_equity": 0.42,
+        "beta": 1.08,
+        "return_1_year_percent": 14.7
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "metric": "pe_ratio_ttm",
+      "in_scope": 5000,
+      "evaluable": 4200,
+      "missing": 800
+    }
+  ]
+}
+```
+
+The values and company above are illustrative only and do not represent live
+market data.
+
+#### Sorting and pagination
+
+Screening results are sorted by an Atlas screening metric. The defaults are
+`sort_by = market_cap`, `sort_direction = desc`, and `limit = 25`. The maximum
+page size is `100`.
+
+Pagination uses an opaque provider-backed cursor. When `next_cursor` is
+non-null, the client may submit that cursor in a subsequent request to retrieve
+the next page. The cursor is valid only for continuation of the same logical
+screen, so criteria, sorting, and other request parameters should remain
+unchanged when advancing through pages. Atlas does not expose provider
+pagination implementation details beyond the opaque cursor.
+
 #### Verified provider notes
 
 Tickerbot was manually smoke-tested before the contract was locked.
@@ -404,6 +567,19 @@ Tickerbot was manually smoke-tested before the contract was locked.
 - Decimal-style provider fields such as `day_change_pct` and `gap_pct` are returned as decimal fractions, not percentage points.
 - Provider `null_coverage` reports how many rows were in scope, how many were evaluable, and how many were NULL for each predicate column.
 - Rows with NULL on a predicate column do not match that predicate.
+
+#### Screening universe
+
+Atlas v1 stock screening is limited to common stocks. The provider request is
+restricted to the stock asset class, and Atlas additionally applies the
+verified common-stock classification used by the screening provider. This
+excludes ETFs and other non-common-stock instruments from the v1 screening
+universe.
+
+The screening feature is read-only. Executing a screen does not create or
+modify securities, positions, portfolios, screening-history records, or saved
+screen definitions. Milestone 6 therefore requires no database model or
+Alembic migration.
 
 ## AI Analysis
 

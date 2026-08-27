@@ -1,9 +1,8 @@
 
-import datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AwareDatetime, BaseModel, Field, field_validator
 
 
 class StockQuote(BaseModel):
@@ -17,38 +16,36 @@ class StockQuote(BaseModel):
     previous_close_price: Decimal
     timestamp: int
 
-ScreenerMetric = Enum("ScreenerMetric",
-    MARKET_CAP= "market_cap",
-    PE_RATIO_TTM= "pe_ratio_ttm",
-    PRICE_TO_BOOK= "price_to_book",
-    PRICE_TO_SALES_TTM= "price_to_sales_ttm",
-    PRICE_TO_FREE_CASH_FLOW_TTM= "price_to_free_cash_flow_ttm",
+class ScreenerMetric(StrEnum):
+    MARKET_CAP= "market_cap"
+    PE_RATIO_TTM= "pe_ratio_ttm"
+    PRICE_TO_BOOK= "price_to_book"
+    PRICE_TO_SALES_TTM= "price_to_sales_ttm"
+    PRICE_TO_FREE_CASH_FLOW_TTM= "price_to_free_cash_flow_ttm"
 
-    REVENUE_GROWTH_YOY_PERCENT= "revenue_growth_yoy_percent",
+    REVENUE_GROWTH_YOY_PERCENT= "revenue_growth_yoy_percent"
 
-    RETURN_ON_EQUITY_TTM_PERCENT= "return_on_equity_ttm_percent",
-    OPERATING_MARGIN_TTM_PERCENT= "operating_margin_ttm_percent",
-    NET_MARGIN_TTM_PERCENT= "net_margin_ttm_percent",
+    RETURN_ON_EQUITY_TTM_PERCENT= "return_on_equity_ttm_percent"
+    OPERATING_MARGIN_TTM_PERCENT= "operating_margin_ttm_percent"
+    NET_MARGIN_TTM_PERCENT= "net_margin_ttm_percent"
 
-    CURRENT_RATIO= "current_ratio",
-    DEBT_TO_EQUITY= "debt_to_equity",
+    CURRENT_RATIO= "current_ratio"
+    DEBT_TO_EQUITY= "debt_to_equity"
 
-    BETA= "beta",
-    RETURN_1_YEAR_PERCENT= "return_1_year_percent",
-)
+    BETA= "beta"
+    RETURN_1_YEAR_PERCENT= "return_1_year_percent"
 
-ScreenerOperator = Enum("ScreenerOperator",
-    EQ= "eq",
-    GT= "gt",
-    LT= "lt",
-    GTE= "gte",
-    LTE= "lte",
-)
+class ScreenerOperator(StrEnum):
+    EQ= "eq"
+    GT= "gt"
+    LT= "lt"
+    GTE= "gte"
+    LTE= "lte"
 
-SortDirection = Enum("SortDirection",
-    ASC= "asc",
-    DESC= "desc",
-)
+class SortDirection(StrEnum):
+    ASC= "asc"
+    DESC= "desc"
+
 class StockScreenerCriterion(BaseModel):
     metric: ScreenerMetric
     operator: ScreenerOperator
@@ -92,7 +89,7 @@ class ScreenerMetricCoverageRead(BaseModel):
     evaluable: int = Field(ge=0)
     missing: int = Field(ge=0)
 
-class StockScreenerResultsRead(BaseModel):
+class StockScreenerResultRead(BaseModel):
     symbol: str
     name: str 
     price: Decimal | None= None
@@ -102,8 +99,8 @@ class StockScreenerResultsRead(BaseModel):
     metrics: StockScreenerMetricsRead
 
 class StockScreenerRead(BaseModel):
-    as_of: datetime
+    as_of: AwareDatetime
     returned_count: int = Field(ge=0)
     next_cursor: str | None = None
-    results: list[StockScreenerResultsRead] = Field(default_factory=list)
+    results: list[StockScreenerResultRead] = Field(default_factory=list)
     coverage: list[ScreenerMetricCoverageRead] = Field(default_factory=list)
