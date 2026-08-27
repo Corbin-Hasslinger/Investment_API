@@ -8,6 +8,7 @@ from atlas_api.screening.metrics import (
     PERCENT_TO_RATIO,
     RATIO_TO_PERCENT,
     SCREENER_METRICS,
+    get_provider_field,
 )
 
 
@@ -17,6 +18,36 @@ def test_every_screener_metric_has_registry_definition() -> None:
 
 def test_every_screener_operator_has_mapping() -> None:
     assert set(OPERATOR_MAP) == set(ScreenerOperator)
+
+
+# Explicit mapping guards every metric individually so a silent registry edit cannot slip by.
+EXPECTED_PROVIDER_FIELDS = {
+    ScreenerMetric.MARKET_CAP: "market_cap",
+    ScreenerMetric.PE_RATIO_TTM: "pe_ratio",
+    ScreenerMetric.PRICE_TO_BOOK: "price_to_book",
+    ScreenerMetric.PRICE_TO_SALES_TTM: "price_to_sales",
+    ScreenerMetric.PRICE_TO_FREE_CASH_FLOW_TTM: "price_to_free_cash_flow",
+    ScreenerMetric.REVENUE_GROWTH_YOY_PERCENT: "revenue_growth_yoy",
+    ScreenerMetric.RETURN_ON_EQUITY_TTM_PERCENT: "return_on_equity_ttm",
+    ScreenerMetric.OPERATING_MARGIN_TTM_PERCENT: "operating_margin_ttm",
+    ScreenerMetric.NET_MARGIN_TTM_PERCENT: "profit_margin_ttm",
+    ScreenerMetric.CURRENT_RATIO: "current_ratio",
+    ScreenerMetric.DEBT_TO_EQUITY: "debt_to_equity",
+    ScreenerMetric.BETA: "beta",
+    ScreenerMetric.RETURN_1_YEAR_PERCENT: "change_1y",
+}
+
+
+def test_expected_provider_fields_covers_every_metric() -> None:
+    assert set(EXPECTED_PROVIDER_FIELDS) == set(ScreenerMetric)
+
+
+@pytest.mark.parametrize(
+    ("metric", "provider_field"),
+    list(EXPECTED_PROVIDER_FIELDS.items()),
+)
+def test_metric_provider_mapping(metric: ScreenerMetric, provider_field: str) -> None:
+    assert get_provider_field(metric) == provider_field
 
 
 @pytest.mark.parametrize(

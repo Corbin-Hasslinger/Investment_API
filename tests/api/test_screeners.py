@@ -150,3 +150,18 @@ def test_screen_stocks_maps_service_errors_to_http_responses(
 
     assert response.status_code == expected_status
     assert response.json()["error"]["code"] == expected_code
+    assert response.json()["error"]["message"] == str(error)
+
+
+def test_screen_stocks_accepts_maximum_ten_criteria(client, override_dependency) -> None:
+    service = override_screener_service(override_dependency)
+    service.screen_stocks.return_value = build_screener_read()
+    payload = {
+        **VALID_PAYLOAD,
+        "criteria": [VALID_PAYLOAD["criteria"][0]] * 10,
+    }
+
+    response = client.post("/screeners/stocks", json=payload)
+
+    assert response.status_code == 200
+    service.screen_stocks.assert_awaited_once()

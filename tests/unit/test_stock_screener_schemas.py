@@ -73,6 +73,19 @@ def test_criteria_count_must_be_between_one_and_ten(
         StockScreenerRequest(criteria=criteria)
 
 
+def test_ten_criteria_is_the_valid_upper_boundary() -> None:
+    request = StockScreenerRequest(criteria=[valid_criterion()] * 10)
+
+    assert len(request.criteria) == 10
+
+
+@pytest.mark.parametrize("limit", [1, 100])
+def test_limit_boundaries_are_valid(limit: int) -> None:
+    request = StockScreenerRequest(criteria=[valid_criterion()], limit=limit)
+
+    assert request.limit == limit
+
+
 @pytest.mark.parametrize("metric", ["not_a_metric", "current_price", "marketCap"])
 def test_invalid_metric_is_rejected(metric: str) -> None:
     with pytest.raises(ValidationError):

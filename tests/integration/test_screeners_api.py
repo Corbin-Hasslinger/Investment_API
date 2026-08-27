@@ -119,3 +119,59 @@ def test_screen_stocks_passes_cursor_through_the_whole_stack(
     _, kwargs = tickerbot_client.scan.await_args
     assert kwargs["cursor"] == "opaque-cursor"
     assert response.json()["next_cursor"] == "next-opaque-cursor"
+
+
+def test_screen_stocks_same_screen_next_page_preserves_everything_but_cursor(
+    client, override_dependency
+) -> None:
+    tickerbot_client = override_tickerbot_client(override_dependency)
+    tickerbot_client.scan.return_value = build_provider_response(next_cursor="page-two")
+    request_payload = {
+        "criteria": [{"metric": "market_cap", "operator": "gte", "value": 1000000000}],
+        "sort_by": "market_cap",
+        "sort_direction": "desc",
+        "limit": 2,
+    }
+
+    first_response = client.post("/screeners/stocks", json=request_payload)
+
+    assert first_response.status_code == 200
+    assert first_response.json()["next_cursor"] == "page-two"
+    first_kwargs = tickerbot_client.scan.await_args.kwargs
+
+    tickerbot_client.scan.return_value = build_provider_response(next_cursor=None)
+    second_response = client.post(
+        "/screeners/stocks", json={**request_payload, "cursor": "page-two"}
+    )
+
+    assert second_response.status_code == 200
+    second_kwargs = tickerbot_client.scan.await_args.kwargs
+
+    assert second_kwargs["query"] == first_kwargs["query"]
+    assert second_kwargs["order"] == first_kwargs["order"]
+    assert second_kwargs["direction"] == first_kwargs["direction"]
+    assert second_kwargs["limit"] == first_kwargs["limit"]
+    assert first_kwargs["cursor"] is None
+    assert second_kwargs["cursor"] == "page-two"
+
+
+def test_screen_stocks_minimal_request_reaches_provider_with_defaults(
+    client, override_dependency
+) -> None:
+    tickerbot_client = override_tickerbot_client(override_dependency)
+
+    response = client.post(
+        "/screeners/stocks",
+        json={
+            "criteria": [
+                {"metric": "market_cap", "operator": "gte", "value": 1000000000}
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    _, kwargs = tickerbot_client.scan.await_args
+    assert kwargs["order"] == "market_cap"
+    assert kwargs["direction"] == "desc"
+    assert kwargs["limit"] == 25
+    assert kwargs["cursor"] is None

@@ -268,3 +268,25 @@ async def test_scan_maps_unexpected_http_error(
                 base_url="https://api.tickerbot.io/v2",
             )
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [400, 404, 500])
+async def test_scan_error_messages_never_include_raw_provider_response_body(
+    monkeypatch, status_code: int
+) -> None:
+    sensitive_body = {
+        "error": "SQL compilation failed near 'AUTH_TOKEN=secret123' at api.tickerbot.io/internal"
+    }
+    post = AsyncMock(return_value=response_with_json(status_code, sensitive_body))
+    monkeypatch.setattr(httpx.AsyncClient, "post", post)
+
+    with pytest.raises((UpstreamResponseError, UpstreamUnavailableError)) as exc_info:
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
+
+    message = str(exc_info.value)
+    assert "secret123" not in message
+    assert "SQL compilation" not in message
+    assert "test-key" not in message

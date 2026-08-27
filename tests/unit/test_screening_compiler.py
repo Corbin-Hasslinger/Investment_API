@@ -177,3 +177,32 @@ def test_compiler_output_uses_only_registry_and_serialized_decimal_fragments() -
     assert "net_margin_ttm_percent" not in query
     assert ";" not in query
     assert "--" not in query
+
+
+def test_compile_query_with_realistic_multi_family_screen() -> None:
+    query = ScreenerQueryCompiler().compile(
+        [
+            criterion(
+                ScreenerMetric.MARKET_CAP, ScreenerOperator.GTE, Decimal(10_000_000_000)
+            ),
+            criterion(ScreenerMetric.PE_RATIO_TTM, ScreenerOperator.LTE, Decimal(25)),
+            criterion(
+                ScreenerMetric.REVENUE_GROWTH_YOY_PERCENT,
+                ScreenerOperator.GTE,
+                Decimal(10),
+            ),
+            criterion(ScreenerMetric.DEBT_TO_EQUITY, ScreenerOperator.LTE, Decimal(2)),
+            criterion(
+                ScreenerMetric.RETURN_1_YEAR_PERCENT, ScreenerOperator.GTE, Decimal(15)
+            ),
+        ]
+    )
+
+    assert query == (
+        "asset_type = 'CS' "
+        "AND market_cap >= 10000000000 "
+        "AND pe_ratio <= 25 "
+        "AND revenue_growth_yoy >= 0.10 "
+        "AND debt_to_equity <= 2 "
+        "AND change_1y >= 0.15"
+    )

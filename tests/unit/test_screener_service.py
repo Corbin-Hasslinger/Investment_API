@@ -336,3 +336,237 @@ async def test_screen_stocks_rejects_missing_requested_coverage(
 
     with pytest.raises(UpstreamResponseError):
         await service.screen_stocks(build_request())
+
+
+@pytest.mark.asyncio
+async def test_screen_stocks_sends_no_cursor_on_first_page(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    await service.screen_stocks(build_request(cursor=None))
+
+    _, kwargs = tickerbot_client.scan.await_args
+    assert kwargs["cursor"] is None
+
+
+@pytest.mark.asyncio
+async def test_screen_stocks_forwards_subsequent_page_cursor_exactly(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    await service.screen_stocks(build_request(cursor="abc123"))
+
+    _, kwargs = tickerbot_client.scan.await_args
+    assert kwargs["cursor"] == "abc123"
+
+
+@pytest.mark.asyncio
+async def test_coverage_arithmetic_matches_representative_provider_data(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    tickerbot_client.scan.return_value = build_provider_response(
+        _meta={
+            "null_coverage": {
+                "in_scope_rows": 13889,
+                "columns": {
+                    "asset_type": {"null_rows": 0, "evaluable_rows": 13889},
+                    "pe_ratio": {"null_rows": 11634, "evaluable_rows": 2255},
+                },
+            }
+        }
+    )
+
+    result = await service.screen_stocks(build_request())
+
+    coverage = result.coverage[0]
+    assert coverage.in_scope == 13889
+    assert coverage.evaluable == 2255
+    assert coverage.missing == 11634
+    assert coverage.evaluable + coverage.missing == coverage.in_scope
+
+
+@pytest.mark.asyncio
+async def test_screen_stocks_returns_200_shaped_result_for_zero_matches(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    tickerbot_client.scan.return_value = build_provider_response(
+        count=0,
+        next_cursor=None,
+        results=[],
+    )
+
+    result = await service.screen_stocks(build_request())
+
+    assert result.returned_count == 0
+    assert result.next_cursor is None
+    assert result.results == []
+
+
+@pytest.mark.asyncio
+async def test_screen_stocks_returns_none_for_every_optional_field_when_all_missing(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    row = {
+        "ticker": "TEST",
+        "name": "Test Corporation",
+        "price": None,
+        "day_change_pct": None,
+        "sector": None,
+        "industry": None,
+        "market_cap": None,
+        "pe_ratio": None,
+        "price_to_book": None,
+        "price_to_sales": None,
+        "price_to_free_cash_flow": None,
+        "revenue_growth_yoy": None,
+        "return_on_equity_ttm": None,
+        "operating_margin_ttm": None,
+        "profit_margin_ttm": None,
+        "current_ratio": None,
+        "debt_to_equity": None,
+        "beta": None,
+        "change_1y": None,
+    }
+    tickerbot_client.scan.return_value = build_provider_response(results=[row])
+
+    result = await service.screen_stocks(build_request())
+
+    stock = result.results[0]
+    assert stock.price is None
+    assert stock.day_change_percent is None
+    assert stock.sector is None
+    assert stock.industry is None
+    metrics = stock.metrics.model_dump()
+    assert all(value is None for value in metrics.values())
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("provider_field", "value"),
+    [
+        ("pe_ratio", -12.5),
+        ("revenue_growth_yoy", -0.30),
+        ("profit_margin_ttm", -0.10),
+        ("debt_to_equity", 15.0),
+        ("current_ratio", 22.0),
+        ("beta", -0.5),
+    ],
+)
+async def test_screen_stocks_passes_through_strange_but_valid_financial_values(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+    provider_field: str,
+    value: float,
+) -> None:
+    row = {"ticker": "TEST", "name": "Test Corporation", provider_field: value}
+    tickerbot_client.scan.return_value = build_provider_response(results=[row])
+
+    result = await service.screen_stocks(build_request())
+
+    assert result.results[0] is not None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("nonfinite_value", [float("nan"), float("inf"), float("-inf")])
+async def test_screen_stocks_rejects_nonfinite_provider_values(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+    nonfinite_value: float,
+) -> None:
+    row = {"ticker": "TEST", "name": "Test Corporation", "pe_ratio": nonfinite_value}
+    tickerbot_client.scan.return_value = build_provider_response(results=[row])
+
+    with pytest.raises(UpstreamResponseError):
+        await service.screen_stocks(build_request())
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "as_of_value",
+    [
+        "2026-08-27T21:18:10.274000Z",
+        "2026-08-27T21:18:10+00:00",
+    ],
+)
+async def test_screen_stocks_accepts_valid_aware_as_of_variants(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+    as_of_value: str,
+) -> None:
+    tickerbot_client.scan.return_value = build_provider_response(as_of=as_of_value)
+
+    result = await service.screen_stocks(build_request())
+
+    assert result.as_of.tzinfo is not None
+
+
+@pytest.mark.asyncio
+async def test_screen_stocks_rejects_unparsable_as_of(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    tickerbot_client.scan.return_value = build_provider_response(as_of="banana")
+
+    with pytest.raises(UpstreamResponseError):
+        await service.screen_stocks(build_request())
+
+
+@pytest.mark.asyncio
+async def test_screen_stocks_rejects_timezone_naive_as_of(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    tickerbot_client.scan.return_value = build_provider_response(
+        as_of="2026-08-27T21:18:10"
+    )
+
+    with pytest.raises(UpstreamResponseError):
+        await service.screen_stocks(build_request())
+
+
+def test_screener_result_columns_includes_sector_and_industry() -> None:
+    assert "sector" in SCREENER_RESULT_COLUMNS
+    assert "industry" in SCREENER_RESULT_COLUMNS
+
+
+def test_screener_result_columns_includes_every_metric_field_except_market_cap() -> None:
+    from atlas_api.screening.metrics import SCREENER_METRICS
+
+    for metric, definition in SCREENER_METRICS.items():
+        if definition.provider_field == "market_cap":
+            assert definition.provider_field not in SCREENER_RESULT_COLUMNS
+        else:
+            assert definition.provider_field in SCREENER_RESULT_COLUMNS, metric
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("sort_by", "expected_order"),
+    [
+        (ScreenerMetric.NET_MARGIN_TTM_PERCENT, "profit_margin_ttm"),
+        (ScreenerMetric.PE_RATIO_TTM, "pe_ratio"),
+        (ScreenerMetric.RETURN_1_YEAR_PERCENT, "change_1y"),
+    ],
+)
+async def test_screen_stocks_translates_sort_by_for_renamed_metrics(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+    sort_by: ScreenerMetric,
+    expected_order: str,
+) -> None:
+    await service.screen_stocks(build_request(sort_by=sort_by))
+
+    _, kwargs = tickerbot_client.scan.await_args
+    assert kwargs["order"] == expected_order
+
+
+def test_screener_service_has_no_database_dependency() -> None:
+    import inspect
+
+    signature = inspect.signature(ScreenerService.__init__)
+    parameter_names = set(signature.parameters) - {"self"}
+    assert parameter_names == {"tickerbot_client", "query_compiler"}
+
