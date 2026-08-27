@@ -4,6 +4,5 @@ from pydantic import BaseModel
 
 
 class CurrentUserRead(BaseModel):
-	id: UUID
-	email: str
-
+    id: UUID
+    email: str

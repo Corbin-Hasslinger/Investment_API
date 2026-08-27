@@ -83,7 +83,11 @@ def test_compile_single_criterion(
 
 def test_compile_query_with_one_criterion_starts_with_common_stock_condition() -> None:
     query = ScreenerQueryCompiler().compile(
-        [criterion(ScreenerMetric.MARKET_CAP, ScreenerOperator.GTE, Decimal(1_000_000_000))]
+        [
+            criterion(
+                ScreenerMetric.MARKET_CAP, ScreenerOperator.GTE, Decimal(1_000_000_000)
+            )
+        ]
     )
 
     assert query == "asset_type = 'CS' AND market_cap >= 1000000000"
@@ -91,10 +95,14 @@ def test_compile_query_with_one_criterion_starts_with_common_stock_condition() -
     assert query.count(" AND ") == 1
 
 
-def test_compile_query_preserves_criteria_order_and_single_and_between_clauses() -> None:
+def test_compile_query_preserves_criteria_order_and_single_and_between_clauses() -> (
+    None
+):
     query = ScreenerQueryCompiler().compile(
         [
-            criterion(ScreenerMetric.MARKET_CAP, ScreenerOperator.GTE, Decimal(1_000_000_000)),
+            criterion(
+                ScreenerMetric.MARKET_CAP, ScreenerOperator.GTE, Decimal(1_000_000_000)
+            ),
             criterion(ScreenerMetric.PE_RATIO_TTM, ScreenerOperator.LTE, Decimal(25)),
         ]
     )
@@ -112,13 +120,17 @@ def test_compile_query_preserves_criteria_order_and_single_and_between_clauses()
 def test_compile_query_uses_provider_names_when_atlas_metric_names_differ() -> None:
     query = ScreenerQueryCompiler().compile(
         [
-            criterion(ScreenerMetric.PRICE_TO_SALES_TTM, ScreenerOperator.LT, Decimal(5)),
-            criterion(ScreenerMetric.RETURN_1_YEAR_PERCENT, ScreenerOperator.GTE, Decimal(12)),
+            criterion(
+                ScreenerMetric.PRICE_TO_SALES_TTM, ScreenerOperator.LT, Decimal(5)
+            ),
+            criterion(
+                ScreenerMetric.RETURN_1_YEAR_PERCENT, ScreenerOperator.GTE, Decimal(12)
+            ),
         ]
     )
 
     assert "price_to_sales < 5" in query
-    assert "change_1y >= 12" in query
+    assert "change_1y >= 0.12" in query
     assert "price_to_sales_ttm" not in query
     assert "return_1_year_percent" not in query
 
@@ -154,7 +166,11 @@ def test_compiler_inputs_reject_arbitrary_metric_operator_and_value_fragments() 
 
 def test_compiler_output_uses_only_registry_and_serialized_decimal_fragments() -> None:
     query = ScreenerQueryCompiler().compile(
-        [criterion(ScreenerMetric.NET_MARGIN_TTM_PERCENT, ScreenerOperator.GT, Decimal(-5))]
+        [
+            criterion(
+                ScreenerMetric.NET_MARGIN_TTM_PERCENT, ScreenerOperator.GT, Decimal(-5)
+            )
+        ]
     )
 
     assert query == "asset_type = 'CS' AND profit_margin_ttm > -0.05"

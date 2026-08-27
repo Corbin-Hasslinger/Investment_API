@@ -13,7 +13,9 @@ from atlas_api.tools.errors import (
 
 
 @pytest.mark.asyncio
-async def test_get_quote_returns_json_and_preserves_service_normalized_symbol(monkeypatch) -> None:
+async def test_get_quote_returns_json_and_preserves_service_normalized_symbol(
+    monkeypatch,
+) -> None:
     response = httpx.Response(
         200,
         json={"c": 150.25},
@@ -52,7 +54,9 @@ async def test_get_company_profile_returns_profile_data(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_basic_financials_uses_metric_endpoint_and_returns_raw_object(monkeypatch) -> None:
+async def test_get_basic_financials_uses_metric_endpoint_and_returns_raw_object(
+    monkeypatch,
+) -> None:
     financials = {"metric": {"peTTM": 31.82, "epsTTM": 6.42}}
     response = httpx.Response(
         200,
@@ -74,7 +78,9 @@ async def test_get_basic_financials_uses_metric_endpoint_and_returns_raw_object(
 
 
 @pytest.mark.asyncio
-async def test_get_company_news_uses_date_params_and_returns_raw_list(monkeypatch) -> None:
+async def test_get_company_news_uses_date_params_and_returns_raw_list(
+    monkeypatch,
+) -> None:
     news = [
         {
             "id": 123456,

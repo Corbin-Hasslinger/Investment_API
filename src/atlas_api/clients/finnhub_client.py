@@ -9,11 +9,7 @@ from atlas_api.tools.errors import (
 )
 
 type JsonPrimitive = str | int | float | bool | None
-type JsonValue = (
-    JsonPrimitive
-    | list[JsonValue]
-    | dict[str, JsonValue]
-)
+type JsonValue = JsonPrimitive | list[JsonValue] | dict[str, JsonValue]
 type JsonObject = dict[str, JsonValue]
 
 
@@ -53,7 +49,7 @@ class FinnhubClient:
                 )
             objects.append(item)
         return objects
-    
+
     async def _get_json(
         self,
         path: str,
@@ -72,18 +68,12 @@ class FinnhubClient:
                 )
             response.raise_for_status()
         except httpx.TimeoutException as exc:
-            raise UpstreamTimeoutError(
-                "Finnhub request timed out."
-            ) from exc
+            raise UpstreamTimeoutError("Finnhub request timed out.") from exc
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 429:
-                raise UpstreamRateLimitedError(
-                    "Finnhub rate limit exceeded."
-                ) from exc
+                raise UpstreamRateLimitedError("Finnhub rate limit exceeded.") from exc
             if 500 <= exc.response.status_code < 600:
-                raise UpstreamUnavailableError(
-                    "Finnhub service unavailable."
-                ) from exc
+                raise UpstreamUnavailableError("Finnhub service unavailable.") from exc
             raise
         except httpx.RequestError as exc:
             raise UpstreamUnavailableError(
@@ -94,40 +84,28 @@ class FinnhubClient:
 
     async def get_quote(self, symbol: str) -> dict[str, JsonValue]:
         """Fetches the latest stock quote for the given ticker symbol from Finnhub API."""
-        data = await self._get_json(
-            "quote", 
-            {
-                "symbol": symbol
-            }
-        )
+        data = await self._get_json("quote", {"symbol": symbol})
         return self._expect_object(data, "Quote")
 
     async def get_company_profile(self, symbol: str) -> dict[str, JsonValue]:
         """Return company profile data for the given ticker symbol."""
-        data = await self._get_json(
-            "stock/profile2", 
-            {
-                "symbol": symbol
-            }
-        )
+        data = await self._get_json("stock/profile2", {"symbol": symbol})
         return self._expect_object(data, "Company Profile")
 
     async def get_basic_financials(self, symbol: str) -> dict[str, JsonValue]:
         """Return basic financials for the given ticker symbol."""
         data = await self._get_json(
-                "stock/metric",
-                {
-                    "symbol": symbol,
-                    "metric": "all",
-                },
-            )
+            "stock/metric",
+            {
+                "symbol": symbol,
+                "metric": "all",
+            },
+        )
         return self._expect_object(data, "Basic Financials")
-    
-    async def get_company_news(self, 
-                               symbol: str, 
-                               from_date: date,
-                               to_date: date
-                               ) -> list[dict[str, JsonValue]]:
+
+    async def get_company_news(
+        self, symbol: str, from_date: date, to_date: date
+    ) -> list[dict[str, JsonValue]]:
         """Return the latest company news for the given ticker symbol."""
         data = await self._get_json(
             "company-news",

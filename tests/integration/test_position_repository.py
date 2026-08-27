@@ -19,6 +19,7 @@ def make_security(symbol: str) -> Security:
         currency="USD",
     )
 
+
 def test_create_and_fetch_by_id_and_portfolio_id(session, portfolio, security) -> None:
     repository = PositionRepository(session)
     position = repository.create_position(
@@ -43,7 +44,9 @@ def test_create_and_fetch_by_id_and_portfolio_id(session, portfolio, security) -
     assert fetched.symbol == security.symbol
 
 
-def test_get_by_id_returns_none_for_wrong_portfolio_id(session, portfolio, security) -> None:
+def test_get_by_id_returns_none_for_wrong_portfolio_id(
+    session, portfolio, security
+) -> None:
     repository = PositionRepository(session)
     position = repository.create_position(
         Position(
@@ -57,15 +60,23 @@ def test_get_by_id_returns_none_for_wrong_portfolio_id(session, portfolio, secur
     assert repository.get_position_by_id(position.id, uuid4()) is None
 
 
-def test_list_returns_only_positions_for_selected_portfolio(session, user, security) -> None:
+def test_list_returns_only_positions_for_selected_portfolio(
+    session, user, security
+) -> None:
     repository = PositionRepository(session)
-    other_user = User(email=f"other-{uuid4()}@example.com", hashed_password="hashed-password")
+    other_user = User(
+        email=f"other-{uuid4()}@example.com", hashed_password="hashed-password"
+    )
     session.add(other_user)
     session.commit()
     session.refresh(other_user)
 
-    other_portfolio = Portfolio(user_id=other_user.id, name="Portfolio B", description="Beta")
-    target_portfolio = Portfolio(user_id=user.id, name="Portfolio C", description="Gamma")
+    other_portfolio = Portfolio(
+        user_id=other_user.id, name="Portfolio B", description="Beta"
+    )
+    target_portfolio = Portfolio(
+        user_id=user.id, name="Portfolio C", description="Gamma"
+    )
     session.add_all([other_portfolio, target_portfolio])
     session.commit()
     session.refresh(other_portfolio)
@@ -94,7 +105,9 @@ def test_list_returns_only_positions_for_selected_portfolio(session, user, secur
     assert all(position.portfolio_id == target_portfolio.id for position in positions)
 
 
-def test_update_persists_changed_shares_and_average_cost(session, portfolio, security) -> None:
+def test_update_persists_changed_shares_and_average_cost(
+    session, portfolio, security
+) -> None:
     repository = PositionRepository(session)
     position = repository.create_position(
         Position(
@@ -138,7 +151,9 @@ def test_delete_removes_row(session, portfolio, security) -> None:
     assert repository.get_position_by_id(position.id, portfolio.id) is None
 
 
-def test_same_portfolio_and_security_duplicate_is_rejected(session, portfolio, security) -> None:
+def test_same_portfolio_and_security_duplicate_is_rejected(
+    session, portfolio, security
+) -> None:
     repository = PositionRepository(session)
     repository.create_position(
         Position(
@@ -162,7 +177,9 @@ def test_same_portfolio_and_security_duplicate_is_rejected(session, portfolio, s
     except IntegrityError:
         session.rollback()
     else:
-        raise AssertionError("Expected same portfolio/security duplicate to violate uniqueness.")
+        raise AssertionError(
+            "Expected same portfolio/security duplicate to violate uniqueness."
+        )
 
 
 def test_different_portfolios_can_share_the_same_security(session, user) -> None:
@@ -172,8 +189,12 @@ def test_different_portfolios_can_share_the_same_security(session, user) -> None
     session.commit()
     session.refresh(aapl)
 
-    first_portfolio = Portfolio(user_id=user.id, name="First Portfolio", description="Alpha")
-    second_portfolio = Portfolio(user_id=user.id, name="Second Portfolio", description="Beta")
+    first_portfolio = Portfolio(
+        user_id=user.id, name="First Portfolio", description="Alpha"
+    )
+    second_portfolio = Portfolio(
+        user_id=user.id, name="Second Portfolio", description="Beta"
+    )
     session.add_all([first_portfolio, second_portfolio])
     session.commit()
     session.refresh(first_portfolio)

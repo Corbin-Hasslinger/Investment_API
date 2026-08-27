@@ -93,7 +93,9 @@ def override_research_service(override_dependency) -> MagicMock:
     return service
 
 
-def test_get_company_research_returns_200_with_complete_response(client, override_dependency) -> None:
+def test_get_company_research_returns_200_with_complete_response(
+    client, override_dependency
+) -> None:
     research_service = override_research_service(override_dependency)
     research = build_company_research_read()
     research_service.get_company_research.return_value = research
@@ -114,9 +116,13 @@ def test_get_company_research_returns_200_with_complete_response(client, overrid
     research_service.get_company_research.assert_awaited_once_with("AAPL")
 
 
-def test_get_company_research_returns_200_with_minimal_partial_response(client, override_dependency) -> None:
+def test_get_company_research_returns_200_with_minimal_partial_response(
+    client, override_dependency
+) -> None:
     research_service = override_research_service(override_dependency)
-    research_service.get_company_research.return_value = build_minimal_company_research_read()
+    research_service.get_company_research.return_value = (
+        build_minimal_company_research_read()
+    )
 
     response = client.get("/research/company/AAPL")
 
@@ -134,9 +140,13 @@ def test_get_company_research_returns_200_with_minimal_partial_response(client, 
     research_service.get_company_research.assert_awaited_once_with("AAPL")
 
 
-def test_get_company_research_returns_400_for_invalid_symbol(client, override_dependency) -> None:
+def test_get_company_research_returns_400_for_invalid_symbol(
+    client, override_dependency
+) -> None:
     research_service = override_research_service(override_dependency)
-    research_service.get_company_research.side_effect = InvalidSymbolFormatError("Invalid symbol format")
+    research_service.get_company_research.side_effect = InvalidSymbolFormatError(
+        "Invalid symbol format"
+    )
 
     response = client.get("/research/company/INVALID$")
 
@@ -145,7 +155,9 @@ def test_get_company_research_returns_400_for_invalid_symbol(client, override_de
     research_service.get_company_research.assert_awaited_once_with("INVALID$")
 
 
-def test_get_company_research_returns_400_for_unsupported_symbol(client, override_dependency) -> None:
+def test_get_company_research_returns_400_for_unsupported_symbol(
+    client, override_dependency
+) -> None:
     research_service = override_research_service(override_dependency)
     research_service.get_company_research.side_effect = UnsupportedSymbolError(
         "Symbol 'FAKEZZ' is not supported by Finnhub."
@@ -161,7 +173,11 @@ def test_get_company_research_returns_400_for_unsupported_symbol(client, overrid
 @pytest.mark.parametrize(
     ("error", "expected_status", "expected_code"),
     [
-        (UpstreamRateLimitedError("Finnhub rate limited"), 429, "upstream_rate_limited"),
+        (
+            UpstreamRateLimitedError("Finnhub rate limited"),
+            429,
+            "upstream_rate_limited",
+        ),
         (UpstreamUnavailableError("Finnhub unavailable"), 503, "upstream_unavailable"),
         (UpstreamTimeoutError("Finnhub timed out"), 504, "upstream_timeout"),
     ],

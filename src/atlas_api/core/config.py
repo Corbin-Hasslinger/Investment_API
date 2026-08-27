@@ -6,10 +6,11 @@ from pydantic import AliasChoices, Field, SecretStr, computed_field, model_valid
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Environment = Literal["development", "production", "test"]
-ENV_FILE_NAME= ".env"
+ENV_FILE_NAME = ".env"
+
 
 def find_env_file(start_dir: Path | None = None) -> Path | None:
-    """ Searches the current directory and  its parents for  a '.env' file. """
+    """Searches the current directory and  its parents for  a '.env' file."""
 
     current_dir = (start_dir or Path.cwd()).resolve()
     for directory in (current_dir, *current_dir.parents):
@@ -18,9 +19,9 @@ def find_env_file(start_dir: Path | None = None) -> Path | None:
             return env_file
     return None
 
-class Settings(BaseSettings):
 
-    app_name : str = "Atlas API"
+class Settings(BaseSettings):
+    app_name: str = "Atlas API"
     environment: Environment = "development"
 
     database_url: str | None = None
@@ -31,12 +32,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     finnhub_api_key: SecretStr | None = Field(
-        default= None,
-        validation_alias = AliasChoices("FINNHUB_API_KEY", "finnhub_api_key")
+        default=None,
+        validation_alias=AliasChoices("FINNHUB_API_KEY", "finnhub_api_key"),
     )
     tickerbot_api_key: SecretStr | None = Field(
         default=None,
-        validation_alias=AliasChoices("TICKERBOT_API_KEY", "tickerbot_api_key")
+        validation_alias=AliasChoices("TICKERBOT_API_KEY", "tickerbot_api_key"),
     )
     tickerbot_base_url: str = Field(
         default="https://api.tickerbot.io/v2",
@@ -44,7 +45,7 @@ class Settings(BaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        env_file_encoding = "utf-8",
+        env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
     )
@@ -58,15 +59,14 @@ class Settings(BaseSettings):
 
         super().__init__(**kwargs, **values)
 
-
     @model_validator(mode="after")
     def validate_required_settings(self) -> "Settings":
-        """ Validates that required settings are set. """
-        if  self.environment != "test" and not self.finnhub_api_key:
+        """Validates that required settings are set."""
+        if self.environment != "test" and not self.finnhub_api_key:
             raise ValueError(
                 "FINNHUB_API_KEY is required. Set it in .env or as an environment variable."
             )
-        if  self.environment != "test" and not self.tickerbot_api_key:
+        if self.environment != "test" and not self.tickerbot_api_key:
             raise ValueError(
                 "TICKERBOT_API_KEY is required. Set it in .env or as an environment variable."
             )
@@ -89,8 +89,7 @@ class Settings(BaseSettings):
         return "postgresql+psycopg://postgres:postgres@postgres:5432/atlas_dev"
 
 
-
 @lru_cache
 def get_settings() -> Settings:
-    """ Returns a Settings instance. """
+    """Returns a Settings instance."""
     return Settings()

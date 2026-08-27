@@ -34,11 +34,13 @@ def client(app: FastAPI) -> Iterator[TestClient]:
     with TestClient(app) as test_client:
         yield test_client
 
+
 @pytest.fixture(autouse=True)
 def clear_settings_cache() -> Iterator[None]:
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
+
 
 @pytest.fixture
 def engine(settings: Settings):
@@ -46,15 +48,17 @@ def engine(settings: Settings):
     SQLModel.metadata.create_all(engine)
     return engine
 
+
 @pytest.fixture
 def session(engine) -> Iterator[Session]:
     with Session(engine) as session:
-            session.exec(delete(Position))
-            session.exec(delete(Security))
-            session.exec(delete(Portfolio))
-            session.exec(delete(User))
-            session.commit()
-            yield session
+        session.exec(delete(Position))
+        session.exec(delete(Security))
+        session.exec(delete(Portfolio))
+        session.exec(delete(User))
+        session.commit()
+        yield session
+
 
 @pytest.fixture
 def user(session) -> User:
@@ -64,39 +68,51 @@ def user(session) -> User:
     session.refresh(user)
     return user
 
+
 @pytest.fixture
 def portfolio(session, user) -> Portfolio:
-    portfolio = Portfolio(user_id=user.id, name="Demo Portfolio", description="Test portfolio")
+    portfolio = Portfolio(
+        user_id=user.id, name="Demo Portfolio", description="Test portfolio"
+    )
     session.add(portfolio)
     session.commit()
     session.refresh(portfolio)
     return portfolio
 
+
 @pytest.fixture
 def security(session) -> Security:
-    security = Security(symbol="AAPL", name="Apple Inc", exchange="NASDAQ", currency="USD")
+    security = Security(
+        symbol="AAPL", name="Apple Inc", exchange="NASDAQ", currency="USD"
+    )
     session.add(security)
     session.commit()
     session.refresh(security)
     return security
 
+
 @pytest.fixture
-def override_dependency(app: FastAPI) -> Iterator[Callable[[Callable[..., Any], Callable[..., Any]], None]]:
+def override_dependency(
+    app: FastAPI,
+) -> Iterator[Callable[[Callable[..., Any], Callable[..., Any]], None]]:
     def register(dependency: Callable[..., Any], override: Callable[..., Any]) -> None:
         app.dependency_overrides[dependency] = override
 
     yield register
     app.dependency_overrides.clear()
 
+
 @pytest.fixture
 def security_repository() -> MagicMock:
     """Create a mocked SecurityRepository for unit tests."""
     return MagicMock(spec=SecurityRepository)
 
+
 @pytest.fixture
 def finnhub_client() -> MagicMock:
     """Create a mocked FinnhubClient for unit tests."""
     return MagicMock(spec=FinnhubClient)
+
 
 @pytest.fixture
 def security_service(
@@ -108,4 +124,3 @@ def security_service(
         security_repository=security_repository,
         finnhub_client=finnhub_client,
     )
-

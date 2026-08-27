@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 from sqlalchemy import func
@@ -21,26 +20,32 @@ class PortfolioRepository:
         self.session.commit()
 
     def refresh(self, portfolio: Portfolio) -> None:
-        self.session.refresh(portfolio)  
+        self.session.refresh(portfolio)
 
     def create_portfolio(self, portfolio: Portfolio) -> Portfolio:
         self.session.add(portfolio)
         self.session.flush()
         return portfolio
-    def get_portfolio_by_id(self, portfolio_id: UUID, user_id: UUID)  -> Portfolio | None:
+
+    def get_portfolio_by_id(
+        self, portfolio_id: UUID, user_id: UUID
+    ) -> Portfolio | None:
         return self.session.exec(
             select(Portfolio).where(
-                Portfolio.id == portfolio_id,
-                Portfolio.user_id == user_id
+                Portfolio.id == portfolio_id, Portfolio.user_id == user_id
             )
         ).first()
+
     def get_all_portfolios(self, user_id: UUID) -> list[Portfolio]:
         return self.session.exec(
             select(Portfolio)
             .where(Portfolio.user_id == user_id)
             .order_by(col(Portfolio.created_at).desc(), col(Portfolio.id).desc())
         ).all()
-    def update_portfolio(self, portfolio_id: UUID, payload: PortfolioUpdate, user_id: UUID) -> Portfolio:
+
+    def update_portfolio(
+        self, portfolio_id: UUID, payload: PortfolioUpdate, user_id: UUID
+    ) -> Portfolio:
         portfolio = self.get_portfolio_by_id(portfolio_id, user_id)
         for key, value in payload.model_dump(exclude_unset=True).items():
             setattr(portfolio, key, value)
@@ -48,13 +53,19 @@ class PortfolioRepository:
             self.session.add(portfolio)
             self.session.flush()
             return portfolio
-        raise PortfolioNotFoundError(f"Portfolio with ID {portfolio_id} not found for user {user_id}")
+        raise PortfolioNotFoundError(
+            f"Portfolio with ID {portfolio_id} not found for user {user_id}"
+        )
+
     def delete_portfolio(self, portfolio_id: UUID, user_id: UUID) -> None:
         portfolio = self.get_portfolio_by_id(portfolio_id, user_id)
         if portfolio:
             self.session.delete(portfolio)
             self.session.flush()
-    def exists_by_name(self, name: str, user_id: UUID, exclude_id: UUID | None = None) -> bool:
+
+    def exists_by_name(
+        self, name: str, user_id: UUID, exclude_id: UUID | None = None
+    ) -> bool:
         stmt = select(Portfolio).where(
             func.lower(Portfolio.name) == name.lower(),
             Portfolio.user_id == user_id,

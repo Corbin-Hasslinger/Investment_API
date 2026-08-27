@@ -1,5 +1,3 @@
-
-
 from uuid import UUID
 
 from fastapi import APIRouter, status
@@ -19,25 +17,25 @@ router = APIRouter(
     tags=["Portfolios"],
 )
 
+
 @router.post(
     "",
     response_model=PortfolioRead,
     summary="Create a new portfolio",
-    status_code = status.HTTP_201_CREATED,
+    status_code=status.HTTP_201_CREATED,
 )
 def create_portfolio(
-    payload: PortfolioCreate, 
-    service: PortfolioServiceDI,
-    current_user: CurrentUserDI
+    payload: PortfolioCreate, service: PortfolioServiceDI, current_user: CurrentUserDI
 ) -> PortfolioRead:
     """Creates a new portfolio."""
     return service.create_portfolio(payload, current_user.id)
+
 
 @router.get(
     "",
     response_model=PaginatedResult[PortfolioRead],
     summary="Get all portfolios",
-    status_code = status.HTTP_200_OK,
+    status_code=status.HTTP_200_OK,
 )
 def get_all_portfolios(
     service: PortfolioServiceDI,
@@ -55,20 +53,22 @@ def get_all_portfolios(
     """
     return service.get_all_portfolios(current_user.id, pagination)
 
-@router.get("/{portfolio_id}",
+
+@router.get(
+    "/{portfolio_id}",
     response_model=PortfolioRead,
     summary="Get a specific portfolio by ID",
     status_code=status.HTTP_200_OK,
 )
 def get_portfolio(
-    portfolio_id: UUID,
-    service: PortfolioServiceDI,
-    current_user: CurrentUserDI
+    portfolio_id: UUID, service: PortfolioServiceDI, current_user: CurrentUserDI
 ) -> PortfolioRead:
     """Retrieves a specific portfolio by its ID."""
     return service.get_portfolio(portfolio_id, current_user.id)
 
-@router.patch("/{portfolio_id}",
+
+@router.patch(
+    "/{portfolio_id}",
     response_model=PortfolioRead,
     summary="Update a specific portfolio by ID",
     status_code=status.HTTP_200_OK,
@@ -77,28 +77,30 @@ def update_portfolio(
     portfolio_id: UUID,
     payload: PortfolioUpdate,
     service: PortfolioServiceDI,
-    current_user: CurrentUserDI
+    current_user: CurrentUserDI,
 ) -> PortfolioRead:
     """Updates a specific portfolio by its ID."""
     return service.update_portfolio(portfolio_id, payload, current_user.id)
 
-@router.delete("/{portfolio_id}",
+
+@router.delete(
+    "/{portfolio_id}",
     summary="Delete a specific portfolio by ID",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_portfolio(
-    portfolio_id: UUID,
-    service: PortfolioServiceDI,
-    current_user: CurrentUserDI
+    portfolio_id: UUID, service: PortfolioServiceDI, current_user: CurrentUserDI
 ) -> None:
     """Deletes a specific portfolio by its ID."""
     service.delete_portfolio(portfolio_id, current_user.id)
 
-@router.get("/{portfolio_id}/analytics",
-            response_model=PortfolioAnalyticsRead,
-            summary="Get portfolio analytics for a specific portfolio",
-            status_code=status.HTTP_200_OK,
-            )
+
+@router.get(
+    "/{portfolio_id}/analytics",
+    response_model=PortfolioAnalyticsRead,
+    summary="Get portfolio analytics for a specific portfolio",
+    status_code=status.HTTP_200_OK,
+)
 async def get_portfolio_analytics(
     portfolio_id: UUID,
     service: PortfolioAnalyticsServiceDI,

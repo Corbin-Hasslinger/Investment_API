@@ -28,6 +28,7 @@ def build_position(
         allocation_percent=Decimal("0.00"),
     )
 
+
 class TestCalculatePositionAnalytics:
     """Test suite for AnalysisCalculations.calculate_position_analytics()."""
 
@@ -257,7 +258,11 @@ class TestCalculatePortfolioAnalytics:
 
         result = calculations.calculate_portfolio_analytics(portfolio_id, positions)
 
-        assert [position.symbol for position in result.positions] == ["AAPL", "GOOG", "MSFT"]
+        assert [position.symbol for position in result.positions] == [
+            "AAPL",
+            "GOOG",
+            "MSFT",
+        ]
 
     def test_portfolio_gain_loss_percent_uses_total_values(self):
         calculations = AnalysisCalculations()

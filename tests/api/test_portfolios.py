@@ -91,7 +91,9 @@ def build_portfolio_analytics_read(
         total_market_value=total_market_value,
         total_cost_basis=total_cost_basis,
         total_unrealized_gain_loss=total_unrealized_gain_loss,
-        total_unrealized_gain_loss_percent=Decimal("25.00") if total_cost_basis else None,
+        total_unrealized_gain_loss_percent=Decimal("25.00")
+        if total_cost_basis
+        else None,
         positions=analytics_positions,
     )
 
@@ -110,11 +112,15 @@ def build_position_analytics_read() -> PortfolioPositionAnalyticsRead:
     )
 
 
-def test_post_portfolios_returns_201_and_response_body_shape(client, override_dependency) -> None:
+def test_post_portfolios_returns_201_and_response_body_shape(
+    client, override_dependency
+) -> None:
     user_id = UUID("33333333-3333-3333-3333-333333333333")
     current_user = override_current_user(override_dependency, user_id)
     service = override_portfolio_service(override_dependency)
-    created = build_portfolio_read(user_id=current_user.id, name="Growth", description="Aggressive picks")
+    created = build_portfolio_read(
+        user_id=current_user.id, name="Growth", description="Aggressive picks"
+    )
     service.create_portfolio.return_value = created
 
     response = client.post(
@@ -134,8 +140,12 @@ def test_get_portfolios_returns_200_and_list_shape(client, override_dependency) 
     user_id = UUID("44444444-4444-4444-4444-444444444444")
     current_user = override_current_user(override_dependency, user_id)
     service = override_portfolio_service(override_dependency)
-    first = build_portfolio_read(user_id=current_user.id, name="Income", description="Dividend stocks")
-    second = build_portfolio_read(user_id=current_user.id, name="Value", description=None)
+    first = build_portfolio_read(
+        user_id=current_user.id, name="Income", description="Dividend stocks"
+    )
+    second = build_portfolio_read(
+        user_id=current_user.id, name="Value", description=None
+    )
     service.get_all_portfolios.return_value = PaginatedResult(
         items=[first, second],
         total=2,
@@ -162,7 +172,9 @@ def test_get_portfolio_returns_200_for_found(client, override_dependency) -> Non
     user_id = UUID("55555555-5555-5555-5555-555555555555")
     current_user = override_current_user(override_dependency, user_id)
     service = override_portfolio_service(override_dependency)
-    portfolio = build_portfolio_read(user_id=current_user.id, name="Core", description="Main account")
+    portfolio = build_portfolio_read(
+        user_id=current_user.id, name="Core", description="Main account"
+    )
     service.get_portfolio.return_value = portfolio
 
     response = client.get(f"/portfolios/{portfolio.id}")
@@ -191,12 +203,19 @@ def test_get_portfolio_returns_404_for_missing(client, override_dependency) -> N
     service.get_portfolio.assert_called_once_with(portfolio_id, current_user.id)
 
 
-def test_patch_portfolio_returns_200_and_updated_payload(client, override_dependency) -> None:
+def test_patch_portfolio_returns_200_and_updated_payload(
+    client, override_dependency
+) -> None:
     user_id = UUID("77777777-7777-7777-7777-777777777777")
     current_user = override_current_user(override_dependency, user_id)
     service = override_portfolio_service(override_dependency)
     portfolio_id = uuid4()
-    updated = build_portfolio_read(user_id=current_user.id, portfolio_id=portfolio_id, name="Updated", description="Adjusted")
+    updated = build_portfolio_read(
+        user_id=current_user.id,
+        portfolio_id=portfolio_id,
+        name="Updated",
+        description="Adjusted",
+    )
     service.update_portfolio.return_value = updated
 
     response = client.patch(
@@ -206,7 +225,9 @@ def test_patch_portfolio_returns_200_and_updated_payload(client, override_depend
 
     assert response.status_code == 200
     assert response.json() == portfolio_read_json(updated)
-    called_portfolio_id, payload, called_user_id = service.update_portfolio.call_args.args
+    called_portfolio_id, payload, called_user_id = (
+        service.update_portfolio.call_args.args
+    )
     assert called_portfolio_id == portfolio_id
     assert payload.name == "Updated"
     assert payload.description == "Adjusted"
@@ -227,11 +248,15 @@ def test_delete_portfolio_returns_204_with_no_body(client, override_dependency) 
     service.delete_portfolio.assert_called_once_with(portfolio_id, current_user.id)
 
 
-def test_post_portfolios_returns_409_for_duplicate_name(client, override_dependency) -> None:
+def test_post_portfolios_returns_409_for_duplicate_name(
+    client, override_dependency
+) -> None:
     user_id = UUID("99999999-9999-9999-9999-999999999999")
     override_current_user(override_dependency, user_id)
     service = override_portfolio_service(override_dependency)
-    service.create_portfolio.side_effect = PortfolioAlreadyExistsError("Duplicate portfolio name")
+    service.create_portfolio.side_effect = PortfolioAlreadyExistsError(
+        "Duplicate portfolio name"
+    )
 
     response = client.post(
         "/portfolios",
@@ -247,8 +272,12 @@ def test_post_portfolios_returns_409_for_duplicate_name(client, override_depende
     }
 
 
-def test_post_portfolios_returns_422_for_schema_validation_failure(client, override_dependency) -> None:
-    override_current_user(override_dependency, UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+def test_post_portfolios_returns_422_for_schema_validation_failure(
+    client, override_dependency
+) -> None:
+    override_current_user(
+        override_dependency, UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+    )
     service = override_portfolio_service(override_dependency)
 
     response = client.post(
@@ -261,8 +290,12 @@ def test_post_portfolios_returns_422_for_schema_validation_failure(client, overr
     service.create_portfolio.assert_not_called()
 
 
-def test_patch_portfolios_returns_422_for_schema_validation_failure(client, override_dependency) -> None:
-    override_current_user(override_dependency, UUID("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"))
+def test_patch_portfolios_returns_422_for_schema_validation_failure(
+    client, override_dependency
+) -> None:
+    override_current_user(
+        override_dependency, UUID("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+    )
     service = override_portfolio_service(override_dependency)
 
     response = client.patch(
@@ -275,7 +308,9 @@ def test_patch_portfolios_returns_422_for_schema_validation_failure(client, over
     service.update_portfolio.assert_not_called()
 
 
-def test_get_portfolio_analytics_returns_200_with_analytics_response(client, override_dependency) -> None:
+def test_get_portfolio_analytics_returns_200_with_analytics_response(
+    client, override_dependency
+) -> None:
     user_id = uuid4()
     portfolio_id = uuid4()
     current_user = override_current_user(override_dependency, user_id)
@@ -290,10 +325,14 @@ def test_get_portfolio_analytics_returns_200_with_analytics_response(client, ove
 
     assert response.status_code == 200
     assert response.json() == analytics.model_dump(mode="json")
-    service.get_portfolio_analytics.assert_awaited_once_with(portfolio_id, current_user.id)
+    service.get_portfolio_analytics.assert_awaited_once_with(
+        portfolio_id, current_user.id
+    )
 
 
-def test_get_portfolio_analytics_returns_200_for_empty_portfolio(client, override_dependency) -> None:
+def test_get_portfolio_analytics_returns_200_for_empty_portfolio(
+    client, override_dependency
+) -> None:
     user_id = uuid4()
     portfolio_id = uuid4()
     current_user = override_current_user(override_dependency, user_id)
@@ -312,15 +351,21 @@ def test_get_portfolio_analytics_returns_200_for_empty_portfolio(client, overrid
         "total_unrealized_gain_loss_percent": None,
         "positions": [],
     }
-    service.get_portfolio_analytics.assert_awaited_once_with(portfolio_id, current_user.id)
+    service.get_portfolio_analytics.assert_awaited_once_with(
+        portfolio_id, current_user.id
+    )
 
 
-def test_get_portfolio_analytics_returns_404_for_missing_portfolio(client, override_dependency) -> None:
+def test_get_portfolio_analytics_returns_404_for_missing_portfolio(
+    client, override_dependency
+) -> None:
     user_id = uuid4()
     portfolio_id = uuid4()
     override_current_user(override_dependency, user_id)
     service = override_portfolio_analytics_service(override_dependency)
-    service.get_portfolio_analytics.side_effect = PortfolioNotFoundError("Portfolio missing")
+    service.get_portfolio_analytics.side_effect = PortfolioNotFoundError(
+        "Portfolio missing"
+    )
 
     response = client.get(f"/portfolios/{portfolio_id}/analytics")
 
@@ -335,7 +380,11 @@ def test_get_portfolio_analytics_returns_404_for_missing_portfolio(client, overr
     ("error", "status_code", "error_code"),
     [
         (UpstreamTimeoutError("Finnhub timed out"), 504, "upstream_timeout"),
-        (UpstreamRateLimitedError("Finnhub rate limited"), 429, "upstream_rate_limited"),
+        (
+            UpstreamRateLimitedError("Finnhub rate limited"),
+            429,
+            "upstream_rate_limited",
+        ),
         (UpstreamUnavailableError("Finnhub unavailable"), 503, "upstream_unavailable"),
     ],
 )
@@ -355,13 +404,13 @@ def test_get_portfolio_analytics_maps_upstream_errors(
     response = client.get(f"/portfolios/{portfolio_id}/analytics")
 
     assert response.status_code == status_code
-    assert response.json() == {
-        "error": {"code": error_code, "message": str(error)}
-    }
+    assert response.json() == {"error": {"code": error_code, "message": str(error)}}
     service.get_portfolio_analytics.assert_awaited_once_with(portfolio_id, user_id)
 
 
-def test_get_portfolio_analytics_returns_422_for_invalid_portfolio_id(client, override_dependency) -> None:
+def test_get_portfolio_analytics_returns_422_for_invalid_portfolio_id(
+    client, override_dependency
+) -> None:
     override_current_user(override_dependency, uuid4())
     service = override_portfolio_analytics_service(override_dependency)
 
@@ -372,7 +421,9 @@ def test_get_portfolio_analytics_returns_422_for_invalid_portfolio_id(client, ov
     service.get_portfolio_analytics.assert_not_called()
 
 
-def test_get_portfolio_detail_route_still_works_with_analytics_route(client, override_dependency) -> None:
+def test_get_portfolio_detail_route_still_works_with_analytics_route(
+    client, override_dependency
+) -> None:
     user_id = uuid4()
     portfolio_id = uuid4()
     current_user = override_current_user(override_dependency, user_id)

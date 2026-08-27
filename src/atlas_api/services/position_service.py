@@ -1,4 +1,3 @@
-
 import uuid
 from uuid import UUID
 
@@ -29,18 +28,24 @@ class PositionService:
     def _to_read(self, model: Position) -> PositionRead:
         return PositionRead.model_validate(model, from_attributes=True)
 
-    def _ensure_portfolio_owned_by_user(self, portfolio_id: UUID, user_id: UUID) -> None:
+    def _ensure_portfolio_owned_by_user(
+        self, portfolio_id: UUID, user_id: UUID
+    ) -> None:
         portfolio = self.portfolio_repository.get_portfolio_by_id(portfolio_id, user_id)
         if portfolio is None:
             raise PortfolioNotFoundError(
                 f"Portfolio with ID {portfolio_id} not found for user {user_id}"
             )
 
-    async def create_position(self, payload: PositionCreate, portfolio_id: UUID, user_id: UUID) -> PositionRead:
+    async def create_position(
+        self, payload: PositionCreate, portfolio_id: UUID, user_id: UUID
+    ) -> PositionRead:
         """Creates a new position for a portfolio owned by the current user."""
         self._ensure_portfolio_owned_by_user(portfolio_id, user_id)
         security = await self.security_service.resolve_security(payload.symbol)
-        if self.position_repository.exists_by_portfolio_and_security(security.symbol, portfolio_id):
+        if self.position_repository.exists_by_portfolio_and_security(
+            security.symbol, portfolio_id
+        ):
             raise PositionAlreadyExistsError(
                 f"Position with symbol {security.symbol} and portfolio_id {portfolio_id} already exists"
             )
@@ -79,10 +84,14 @@ class PositionService:
             page_size=pagination.page_size,
         )
 
-    def get_position(self, position_id: UUID, portfolio_id: UUID, user_id: UUID) -> PositionRead:
+    def get_position(
+        self, position_id: UUID, portfolio_id: UUID, user_id: UUID
+    ) -> PositionRead:
         """Retrieves a specific position only if the portfolio belongs to the current user."""
         self._ensure_portfolio_owned_by_user(portfolio_id, user_id)
-        position = self.position_repository.get_position_by_id(position_id, portfolio_id)
+        position = self.position_repository.get_position_by_id(
+            position_id, portfolio_id
+        )
         if position:
             return self._to_read(position)
         raise PositionNotFoundError(
@@ -98,20 +107,28 @@ class PositionService:
     ) -> PositionRead:
         """Updates a specific position only if the portfolio belongs to the current user."""
         self._ensure_portfolio_owned_by_user(portfolio_id, user_id)
-        position = self.position_repository.get_position_by_id(position_id, portfolio_id)
+        position = self.position_repository.get_position_by_id(
+            position_id, portfolio_id
+        )
         if not position:
             raise PositionNotFoundError(
                 f"Position with ID {position_id} not found for portfolio {portfolio_id}"
             )
-        updated_position = self.position_repository.update_position(position_id, portfolio_id, payload)
+        updated_position = self.position_repository.update_position(
+            position_id, portfolio_id, payload
+        )
         self.position_repository.commit()
         self.position_repository.refresh(updated_position)
         return self._to_read(updated_position)
 
-    def delete_position(self, position_id: UUID, portfolio_id: UUID, user_id: UUID) -> bool:
+    def delete_position(
+        self, position_id: UUID, portfolio_id: UUID, user_id: UUID
+    ) -> bool:
         """Deletes a specific position only if the portfolio belongs to the current user."""
         self._ensure_portfolio_owned_by_user(portfolio_id, user_id)
-        position = self.position_repository.get_position_by_id(position_id, portfolio_id)
+        position = self.position_repository.get_position_by_id(
+            position_id, portfolio_id
+        )
         if not position:
             raise PositionNotFoundError(
                 f"Position with ID {position_id} not found for portfolio {portfolio_id}"

@@ -31,9 +31,7 @@ def provider_response() -> dict[str, object]:
                 "pe_ratio": 34.0,
             }
         ],
-        "_meta": {
-            "null_coverage": {}
-        },
+        "_meta": {"null_coverage": {}},
     }
 
 
@@ -61,7 +59,9 @@ async def test_scan_calls_correct_endpoint(monkeypatch, provider_response) -> No
     post = AsyncMock(return_value=response_with_json(200, provider_response))
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
-    await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+    await scan(
+        TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+    )
 
     post.assert_awaited_once()
     _, kwargs = post.call_args
@@ -73,7 +73,9 @@ async def test_scan_sends_bearer_authentication(monkeypatch, provider_response) 
     post = AsyncMock(return_value=response_with_json(200, provider_response))
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
-    await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+    await scan(
+        TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+    )
 
     _, kwargs = post.call_args
     assert kwargs["headers"]["Authorization"] == "Bearer test-key"
@@ -81,11 +83,15 @@ async def test_scan_sends_bearer_authentication(monkeypatch, provider_response) 
 
 
 @pytest.mark.asyncio
-async def test_scan_sends_correct_request_body_without_cursor(monkeypatch, provider_response) -> None:
+async def test_scan_sends_correct_request_body_without_cursor(
+    monkeypatch, provider_response
+) -> None:
     post = AsyncMock(return_value=response_with_json(200, provider_response))
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
-    await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+    await scan(
+        TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+    )
 
     _, kwargs = post.call_args
     assert kwargs["json"] == {
@@ -100,7 +106,9 @@ async def test_scan_sends_correct_request_body_without_cursor(monkeypatch, provi
 
 
 @pytest.mark.asyncio
-async def test_scan_passes_opaque_cursor_unchanged(monkeypatch, provider_response) -> None:
+async def test_scan_passes_opaque_cursor_unchanged(
+    monkeypatch, provider_response
+) -> None:
     post = AsyncMock(return_value=response_with_json(200, provider_response))
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
     cursor = "opaque-provider-cursor"
@@ -119,7 +127,9 @@ async def test_scan_returns_raw_provider_object(monkeypatch, provider_response) 
     post = AsyncMock(return_value=response_with_json(200, provider_response))
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
-    result = await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+    result = await scan(
+        TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+    )
 
     assert result == provider_response
     assert result["results"][0]["ticker"] == "AAPL"
@@ -131,7 +141,9 @@ async def test_scan_maps_timeout(monkeypatch) -> None:
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
     with pytest.raises(UpstreamTimeoutError):
-        await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
 
 
 @pytest.mark.asyncio
@@ -140,7 +152,9 @@ async def test_scan_maps_rate_limit(monkeypatch) -> None:
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
     with pytest.raises(UpstreamRateLimitedError):
-        await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
 
 
 @pytest.mark.asyncio
@@ -149,26 +163,38 @@ async def test_scan_maps_5xx(monkeypatch) -> None:
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
     with pytest.raises(UpstreamUnavailableError):
-        await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status_code", [401, 402, 403])
-async def test_scan_maps_account_failures_as_upstream_unavailable(monkeypatch, status_code: int) -> None:
-    post = AsyncMock(return_value=response_with_json(status_code, {"error": "account problem"}))
+async def test_scan_maps_account_failures_as_upstream_unavailable(
+    monkeypatch, status_code: int
+) -> None:
+    post = AsyncMock(
+        return_value=response_with_json(status_code, {"error": "account problem"})
+    )
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
     with pytest.raises(UpstreamUnavailableError):
-        await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
 
 
 @pytest.mark.asyncio
 async def test_scan_maps_bad_request_as_upstream_response_error(monkeypatch) -> None:
-    post = AsyncMock(return_value=response_with_json(400, {"error": "bad provider field"}))
+    post = AsyncMock(
+        return_value=response_with_json(400, {"error": "bad provider field"})
+    )
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
     with pytest.raises(UpstreamResponseError):
-        await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
 
 
 @pytest.mark.asyncio
@@ -177,7 +203,9 @@ async def test_scan_maps_network_failure(monkeypatch) -> None:
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
     with pytest.raises(UpstreamUnavailableError):
-        await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
 
 
 @pytest.mark.asyncio
@@ -191,7 +219,9 @@ async def test_scan_maps_invalid_json(monkeypatch) -> None:
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
     with pytest.raises(UpstreamResponseError):
-        await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
 
 
 @pytest.mark.asyncio
@@ -203,12 +233,17 @@ async def test_scan_maps_invalid_json(monkeypatch) -> None:
         {"results": ["AAPL"]},
     ],
 )
-async def test_scan_rejects_malformed_response_envelope(monkeypatch, provider_payload) -> None:
+async def test_scan_rejects_malformed_response_envelope(
+    monkeypatch, provider_payload
+) -> None:
     post = AsyncMock(return_value=response_with_json(200, provider_payload))
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
 
     with pytest.raises(UpstreamResponseError):
-        await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+        await scan(
+            TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2")
+        )
+
 
 @pytest.mark.asyncio
 async def test_scan_maps_unexpected_http_error(

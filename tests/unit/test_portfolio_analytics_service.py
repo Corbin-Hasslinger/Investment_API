@@ -165,13 +165,17 @@ async def test_get_portfolio_analytics_calculates_single_position(
     expected = build_portfolio_analytics(portfolio_id, [calculated_position])
     position_repository.get_all_positions.return_value = [position]
     market_data_service.get_quote.return_value = build_quote("AAPL", Decimal("125.00"))
-    analysis_calculations.calculate_position_analytics.return_value = calculated_position
+    analysis_calculations.calculate_position_analytics.return_value = (
+        calculated_position
+    )
     analysis_calculations.calculate_portfolio_analytics.return_value = expected
 
     result = await service.get_portfolio_analytics(portfolio_id, user_id)
 
     assert result is expected
-    portfolio_repository.get_portfolio_by_id.assert_called_once_with(portfolio_id, user_id)
+    portfolio_repository.get_portfolio_by_id.assert_called_once_with(
+        portfolio_id, user_id
+    )
     position_repository.get_all_positions.assert_called_once_with(portfolio_id)
     market_data_service.get_quote.assert_awaited_once_with("AAPL")
     analysis_calculations.calculate_position_analytics.assert_called_once_with(
@@ -208,7 +212,9 @@ async def test_get_portfolio_analytics_calculates_all_positions(
         build_quote("AAPL", Decimal("125.00")),
         build_quote("MSFT", Decimal("300.00")),
     ]
-    analysis_calculations.calculate_position_analytics.side_effect = calculated_positions
+    analysis_calculations.calculate_position_analytics.side_effect = (
+        calculated_positions
+    )
     analysis_calculations.calculate_portfolio_analytics.return_value = expected
 
     result = await service.get_portfolio_analytics(portfolio_id, user_id)
@@ -216,8 +222,12 @@ async def test_get_portfolio_analytics_calculates_all_positions(
     assert result is expected
     assert market_data_service.get_quote.await_args_list == [call("AAPL"), call("MSFT")]
     assert analysis_calculations.calculate_position_analytics.call_args_list == [
-        call("AAPL", aapl_position.shares, aapl_position.average_cost, Decimal("125.00")),
-        call("MSFT", msft_position.shares, msft_position.average_cost, Decimal("300.00")),
+        call(
+            "AAPL", aapl_position.shares, aapl_position.average_cost, Decimal("125.00")
+        ),
+        call(
+            "MSFT", msft_position.shares, msft_position.average_cost, Decimal("300.00")
+        ),
     ]
     analysis_calculations.calculate_portfolio_analytics.assert_called_once_with(
         portfolio_id,
@@ -246,7 +256,9 @@ async def test_get_portfolio_analytics_returns_empty_portfolio_result(
     position_repository.get_all_positions.assert_called_once_with(portfolio_id)
     market_data_service.get_quote.assert_not_called()
     analysis_calculations.calculate_position_analytics.assert_not_called()
-    analysis_calculations.calculate_portfolio_analytics.assert_called_once_with(portfolio_id, [])
+    analysis_calculations.calculate_portfolio_analytics.assert_called_once_with(
+        portfolio_id, []
+    )
     assert result.positions == []
     assert result.total_market_value == Decimal("0.00")
     assert result.total_cost_basis == Decimal("0.00")
@@ -269,7 +281,9 @@ async def test_get_portfolio_analytics_raises_when_portfolio_is_not_owned(
     with pytest.raises(PortfolioNotFoundError):
         await service.get_portfolio_analytics(portfolio_id, user_id)
 
-    portfolio_repository.get_portfolio_by_id.assert_called_once_with(portfolio_id, user_id)
+    portfolio_repository.get_portfolio_by_id.assert_called_once_with(
+        portfolio_id, user_id
+    )
     position_repository.get_all_positions.assert_not_called()
     market_data_service.get_quote.assert_not_called()
     analysis_calculations.calculate_position_analytics.assert_not_called()

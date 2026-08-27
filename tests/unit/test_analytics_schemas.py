@@ -127,7 +127,7 @@ class TestPortfolioAnalyticsReadSerialization:
         }
         with pytest.raises(ValidationError):
             PortfolioAnalyticsRead.model_validate(payload)
-            
+
     def test_position_extra_fields_are_forbidden(self):
         payload = {
             "symbol": "AAPL",

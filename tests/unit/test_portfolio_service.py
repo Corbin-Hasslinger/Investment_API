@@ -48,7 +48,9 @@ def service(repository: MagicMock) -> PortfolioService:
     return PortfolioService(repository)
 
 
-def test_create_portfolio_returns_portfolio_read_for_valid_create(service: PortfolioService, repository: MagicMock) -> None:
+def test_create_portfolio_returns_portfolio_read_for_valid_create(
+    service: PortfolioService, repository: MagicMock
+) -> None:
     user_id = uuid4()
     stored = build_portfolio(user_id=user_id, name="Growth", description="Aggressive")
     repository.get_all_portfolios.return_value = []
@@ -92,7 +94,9 @@ def test_create_portfolio_rejects_duplicate_normalized_names_for_same_user(
     repository.exists_by_name.return_value = True
 
     with pytest.raises(PortfolioAlreadyExistsError):
-        service.create_portfolio(PortfolioCreate(name="  retirement  ", description=None), user_id)
+        service.create_portfolio(
+            PortfolioCreate(name="  retirement  ", description=None), user_id
+        )
 
     repository.create_portfolio.assert_not_called()
 
@@ -117,8 +121,12 @@ def test_get_all_portfolios_maps_repository_models_to_read_schemas(
     older = datetime.now(UTC) - timedelta(days=1)
     newer = datetime.now(UTC)
     repository.get_all_portfolios.return_value = [
-        build_portfolio(user_id=user_id, name="Newer", created_at=newer, updated_at=newer),
-        build_portfolio(user_id=user_id, name="Older", created_at=older, updated_at=older),
+        build_portfolio(
+            user_id=user_id, name="Newer", created_at=newer, updated_at=newer
+        ),
+        build_portfolio(
+            user_id=user_id, name="Older", created_at=older, updated_at=older
+        ),
     ]
 
     result = service.get_all_portfolios(user_id, PaginationParams(page=1, page_size=25))
@@ -129,7 +137,9 @@ def test_get_all_portfolios_maps_repository_models_to_read_schemas(
     assert result.total == 2
 
 
-def test_update_portfolio_updates_only_provided_fields(service: PortfolioService, repository: MagicMock) -> None:
+def test_update_portfolio_updates_only_provided_fields(
+    service: PortfolioService, repository: MagicMock
+) -> None:
     portfolio_id = uuid4()
     user_id = uuid4()
     existing = build_portfolio(
@@ -156,7 +166,9 @@ def test_update_portfolio_updates_only_provided_fields(service: PortfolioService
     )
 
     update_payload = repository.update_portfolio.call_args.args[1]
-    assert update_payload.model_dump(exclude_unset=True) == {"description": "Updated description"}
+    assert update_payload.model_dump(exclude_unset=True) == {
+        "description": "Updated description"
+    }
     assert result.description == "Updated description"
     assert result.name == "Core"
 
@@ -181,14 +193,18 @@ def test_update_portfolio_allows_description_none_to_clear_description(
     )
     repository.get_portfolio_by_id.side_effect = [existing, updated]
 
-    result = service.update_portfolio(portfolio_id, PortfolioUpdate(description=None), user_id)
+    result = service.update_portfolio(
+        portfolio_id, PortfolioUpdate(description=None), user_id
+    )
 
     update_payload = repository.update_portfolio.call_args.args[1]
     assert update_payload.model_dump(exclude_unset=True) == {"description": None}
     assert result.description is None
 
 
-def test_update_portfolio_rejects_name_none(service: PortfolioService, repository: MagicMock) -> None:
+def test_update_portfolio_rejects_name_none(
+    service: PortfolioService, repository: MagicMock
+) -> None:
     portfolio_id = uuid4()
     user_id = uuid4()
     repository.get_portfolio_by_id.return_value = build_portfolio(
@@ -232,7 +248,9 @@ def test_update_portfolio_rejects_duplicate_normalized_names_for_same_user(
     repository.exists_by_name.return_value = True
 
     with pytest.raises(PortfolioAlreadyExistsError):
-        service.update_portfolio(portfolio_id, PortfolioUpdate(name=" retirement "), user_id)
+        service.update_portfolio(
+            portfolio_id, PortfolioUpdate(name=" retirement "), user_id
+        )
 
     repository.update_portfolio.assert_not_called()
 

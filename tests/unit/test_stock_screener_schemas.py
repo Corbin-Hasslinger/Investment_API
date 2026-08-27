@@ -127,4 +127,3 @@ def test_cursor_accepts_none_or_string(cursor: str | None) -> None:
     request = StockScreenerRequest(criteria=[valid_criterion()], cursor=cursor)
 
     assert request.cursor == cursor
-

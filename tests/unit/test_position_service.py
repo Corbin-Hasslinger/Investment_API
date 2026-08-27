@@ -109,7 +109,9 @@ async def test_create_position_resolves_symbol_and_persists_position(
     repository.create_position.return_value = stored
 
     result = await service.create_position(
-        PositionCreate(symbol=" aapl ", shares=Decimal("25.50"), average_cost=Decimal("110.00")),
+        PositionCreate(
+            symbol=" aapl ", shares=Decimal("25.50"), average_cost=Decimal("110.00")
+        ),
         portfolio_id,
         user_id,
     )
@@ -117,7 +119,9 @@ async def test_create_position_resolves_symbol_and_persists_position(
     assert isinstance(result, PositionRead)
     assert result.symbol == "AAPL"
     security_service.resolve_security.assert_awaited_once_with(" aapl ")
-    repository.exists_by_portfolio_and_security.assert_called_once_with("AAPL", portfolio_id)
+    repository.exists_by_portfolio_and_security.assert_called_once_with(
+        "AAPL", portfolio_id
+    )
     created = repository.create_position.call_args.args[0]
     assert created.symbol == "AAPL"
     repository.commit.assert_called_once()
@@ -162,26 +166,36 @@ async def test_create_position_rejects_unowned_portfolio(
     repository.create_position.assert_not_called()
 
 
-def test_get_all_positions_maps_models_to_read_schemas(service, repository, portfolio_repository) -> None:
+def test_get_all_positions_maps_models_to_read_schemas(
+    service, repository, portfolio_repository
+) -> None:
     portfolio_id = uuid4()
     user_id = uuid4()
     older = datetime.now(UTC) - timedelta(days=1)
     newer = datetime.now(UTC)
     repository.get_all_positions.return_value = [
-        build_position(portfolio_id=portfolio_id, symbol="AAPL", created_at=older, updated_at=older),
-        build_position(portfolio_id=portfolio_id, symbol="MSFT", created_at=newer, updated_at=newer),
+        build_position(
+            portfolio_id=portfolio_id, symbol="AAPL", created_at=older, updated_at=older
+        ),
+        build_position(
+            portfolio_id=portfolio_id, symbol="MSFT", created_at=newer, updated_at=newer
+        ),
     ]
     portfolio_repository.get_portfolio_by_id.return_value = Portfolio(
         id=portfolio_id, user_id=user_id, name="Test Portfolio", description=None
     )
 
-    result = service.get_all_positions(portfolio_id, user_id, PaginationParams(page=1, page_size=25))
+    result = service.get_all_positions(
+        portfolio_id, user_id, PaginationParams(page=1, page_size=25)
+    )
 
     assert [type(item) for item in result.items] == [PositionRead, PositionRead]
     assert [item.symbol for item in result.items] == ["AAPL", "MSFT"]
 
 
-def test_get_position_raises_when_missing(service, repository, portfolio_and_user) -> None:
+def test_get_position_raises_when_missing(
+    service, repository, portfolio_and_user
+) -> None:
     portfolio_id, user_id = portfolio_and_user
     repository.get_position_by_id.return_value = None
 
@@ -189,11 +203,15 @@ def test_get_position_raises_when_missing(service, repository, portfolio_and_use
         service.get_position(uuid4(), portfolio_id, user_id)
 
 
-def test_update_position_updates_provided_fields(service, repository, portfolio_and_user) -> None:
+def test_update_position_updates_provided_fields(
+    service, repository, portfolio_and_user
+) -> None:
     portfolio_id, user_id = portfolio_and_user
     position_id = uuid4()
     existing = build_position(position_id=position_id, portfolio_id=portfolio_id)
-    updated = build_position(position_id=position_id, portfolio_id=portfolio_id, shares="15.50")
+    updated = build_position(
+        position_id=position_id, portfolio_id=portfolio_id, shares="15.50"
+    )
     repository.get_position_by_id.return_value = existing
     repository.update_position.return_value = updated
 

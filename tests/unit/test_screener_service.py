@@ -145,7 +145,7 @@ async def test_screen_stocks_converts_every_percentage_metric(
     assert metrics.return_on_equity_ttm_percent == Decimal(18)
     assert metrics.operating_margin_ttm_percent == Decimal(25)
     assert metrics.net_margin_ttm_percent == Decimal(20)
-    assert metrics.return_1_year_percent == Decimal("0.30")
+    assert metrics.return_1_year_percent == Decimal("30.00")
 
 
 @pytest.mark.asyncio

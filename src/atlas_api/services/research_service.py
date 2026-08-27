@@ -17,11 +17,11 @@ from atlas_api.tools.errors import UnsupportedSymbolError, UpstreamUnavailableEr
 MONEY_PRECISION = Decimal("0.01")
 PROFILE_UNIT_MULTIPLIER = Decimal(1000000)
 
+
 class ResearchService:
-    def __init__(self, 
-                 finnhub_client: FinnhubClient, 
-                 security_service: SecurityService
-                 ):
+    def __init__(
+        self, finnhub_client: FinnhubClient, security_service: SecurityService
+    ):
         self.finnhub_client = finnhub_client
         self.security_service = security_service
 
@@ -85,7 +85,7 @@ class ResearchService:
     @staticmethod
     def _news_date_range(today: date) -> tuple[date, date]:
         return today - timedelta(days=7), today
-        
+
     @staticmethod
     def _extract_metrics(
         financials: dict[str, JsonValue],
@@ -102,24 +102,20 @@ class ResearchService:
         return metrics
 
     def _build_company_overview(
-            self, 
-            normalized_symbol: str,
-            profile: dict[str, JsonValue],
-        ) -> CompanyOverviewRead:
+        self,
+        normalized_symbol: str,
+        profile: dict[str, JsonValue],
+    ) -> CompanyOverviewRead:
         """Builds a company overview from the given profile data."""
         ticker = self._to_optional_string(profile.get("ticker"))
         name = self._to_optional_string(profile.get("name"))
-        if (
-            ticker is None
-            or name is None
-            or ticker.upper() != normalized_symbol
-        ):
+        if ticker is None or name is None or ticker.upper() != normalized_symbol:
             raise UnsupportedSymbolError(
                 f"Symbol '{normalized_symbol}' is not supported by Finnhub."
             )
         return CompanyOverviewRead(
             symbol=normalized_symbol,
-            name= name,
+            name=name,
             exchange=self._to_optional_string(profile.get("exchange")),
             industry=self._to_optional_string(profile.get("finnhubIndustry")),
             country=self._to_optional_string(profile.get("country")),
@@ -127,18 +123,15 @@ class ResearchService:
             ipo_date=self._to_date(profile.get("ipo")),
             website=self._to_optional_string(profile.get("weburl")),
             logo_url=self._to_optional_string(profile.get("logo")),
-            market_cap=self._to_profile_decimal(
-                profile.get("marketCapitalization")
-            ),
+            market_cap=self._to_profile_decimal(profile.get("marketCapitalization")),
             shares_outstanding=self._to_profile_decimal(
                 profile.get("shareOutstanding")
             ),
         )
 
     def _build_valuation_metrics(
-            self, 
-            metrics: dict[str, JsonValue]
-        ) -> ValuationMetricsRead:
+        self, metrics: dict[str, JsonValue]
+    ) -> ValuationMetricsRead:
         """Builds valuation metrics for the given symbol."""
         return ValuationMetricsRead(
             pe_ratio_ttm=self._to_decimal(metrics.get("peTTM")),
@@ -146,73 +139,80 @@ class ResearchService:
             price_to_sales_ttm=self._to_decimal(metrics.get("psTTM")),
             price_to_free_cash_flow_ttm=self._to_decimal(metrics.get("pfcfShareTTM")),
         )
-    
+
     def _build_performance_metrics(
-            self, 
-            metrics: dict[str, JsonValue]
-        ) -> PerformanceMetricsRead:
+        self, metrics: dict[str, JsonValue]
+    ) -> PerformanceMetricsRead:
         """Builds performance metrics for the given symbol."""
         return PerformanceMetricsRead(
             fifty_two_week_high=self._to_decimal(metrics.get("52WeekHigh")),
             fifty_two_week_low=self._to_decimal(metrics.get("52WeekLow")),
             beta=self._to_decimal(metrics.get("beta")),
-            return_3_month_percent=self._to_decimal(metrics.get("13WeekPriceReturnDaily")),
-            return_1_year_percent=self._to_decimal(metrics.get("52WeekPriceReturnDaily")),
+            return_3_month_percent=self._to_decimal(
+                metrics.get("13WeekPriceReturnDaily")
+            ),
+            return_1_year_percent=self._to_decimal(
+                metrics.get("52WeekPriceReturnDaily")
+            ),
         )
 
     def _build_fundamental_metrics(
-            self,
-            metrics: dict[str, JsonValue]
-        ) -> FundamentalMetricsRead:
+        self, metrics: dict[str, JsonValue]
+    ) -> FundamentalMetricsRead:
         """Builds fundamental metrics for the given symbol."""
         return FundamentalMetricsRead(
             eps_ttm=self._to_decimal(metrics.get("epsTTM")),
-            revenue_growth_yoy_percent=self._to_decimal(metrics.get("revenueGrowthTTMYoy")),
+            revenue_growth_yoy_percent=self._to_decimal(
+                metrics.get("revenueGrowthTTMYoy")
+            ),
             eps_growth_yoy_percent=self._to_decimal(metrics.get("epsGrowthTTMYoy")),
             gross_margin_percent=self._to_decimal(metrics.get("grossMarginTTM")),
-            operating_margin_percent=self._to_decimal(metrics.get("operatingMarginTTM")),
+            operating_margin_percent=self._to_decimal(
+                metrics.get("operatingMarginTTM")
+            ),
             net_margin_percent=self._to_decimal(metrics.get("netProfitMarginTTM")),
             return_on_equity_percent=self._to_decimal(metrics.get("roeTTM")),
             current_ratio=self._to_decimal(metrics.get("currentRatioQuarterly")),
-            debt_to_equity=self._to_decimal(metrics.get("totalDebt/totalEquityQuarterly")),
+            debt_to_equity=self._to_decimal(
+                metrics.get("totalDebt/totalEquityQuarterly")
+            ),
         )
 
     def _build_news(
-            self,  
-            raw_news: list[dict[str, JsonValue]]
-        ) -> list[CompanyNewsRead]:
+        self, raw_news: list[dict[str, JsonValue]]
+    ) -> list[CompanyNewsRead]:
         """Builds news for the given symbol within the specified date range."""
         articles: list[CompanyNewsRead] = []
-        
-        for item in raw_news:
-                article_id=item.get("id")
-                headline=self._to_optional_string(item.get("headline"))
-                source=self._to_optional_string(item.get("source"))
-                url=self._to_optional_string(item.get("url"))
-                summary=self._to_optional_string(item.get("summary"))
-                image_url=self._to_optional_string(item.get("image"))
-                published_at=self._to_datetime(item.get("datetime"))
 
-                if (
-                    isinstance(article_id, bool)
-                    or not isinstance(article_id, int)
-                    or headline is None
-                    or source is None
-                    or url is None
-                    or published_at is None
-                ):
-                    continue
-                articles.append(
-                    CompanyNewsRead(
-                        id=article_id,
-                        headline=headline,
-                        source=source,
-                        url=url,
-                        summary=summary,
-                        image_url=image_url,
-                        published_at=published_at,
-                    )
+        for item in raw_news:
+            article_id = item.get("id")
+            headline = self._to_optional_string(item.get("headline"))
+            source = self._to_optional_string(item.get("source"))
+            url = self._to_optional_string(item.get("url"))
+            summary = self._to_optional_string(item.get("summary"))
+            image_url = self._to_optional_string(item.get("image"))
+            published_at = self._to_datetime(item.get("datetime"))
+
+            if (
+                isinstance(article_id, bool)
+                or not isinstance(article_id, int)
+                or headline is None
+                or source is None
+                or url is None
+                or published_at is None
+            ):
+                continue
+            articles.append(
+                CompanyNewsRead(
+                    id=article_id,
+                    headline=headline,
+                    source=source,
+                    url=url,
+                    summary=summary,
+                    image_url=image_url,
+                    published_at=published_at,
                 )
+            )
         articles.sort(key=lambda article: article.published_at, reverse=True)
         return articles[:5]
 
@@ -226,14 +226,11 @@ class ResearchService:
             self.finnhub_client.get_company_news(normalized, from_date, to_date),
         )
         metric_data = self._extract_metrics(financial_data)
-        
+
         return CompanyResearchRead(
-            company = self._build_company_overview(
-                normalized,
-                profile
-            ),
-            valuation = self._build_valuation_metrics(metric_data),
-            performance = self._build_performance_metrics(metric_data),
-            fundamentals = self._build_fundamental_metrics(metric_data),
-            news = self._build_news(raw_news),
+            company=self._build_company_overview(normalized, profile),
+            valuation=self._build_valuation_metrics(metric_data),
+            performance=self._build_performance_metrics(metric_data),
+            fundamentals=self._build_fundamental_metrics(metric_data),
+            news=self._build_news(raw_news),
         )

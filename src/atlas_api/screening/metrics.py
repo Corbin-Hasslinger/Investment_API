@@ -7,16 +7,15 @@ PERCENT_TO_RATIO = Decimal("0.01")
 RATIO_TO_PERCENT = Decimal(100)
 NO_SCALE = Decimal(1)
 
+
 @dataclass(frozen=True)
 class ScreenerMetricDefinition:
     provider_field: str
     input_scale: Decimal = NO_SCALE
     output_scale: Decimal = NO_SCALE
 
-SCREENER_METRICS: dict[
-    ScreenerMetric,
-    ScreenerMetricDefinition
-] = {
+
+SCREENER_METRICS: dict[ScreenerMetric, ScreenerMetricDefinition] = {
     ScreenerMetric.MARKET_CAP: ScreenerMetricDefinition(
         provider_field="market_cap",
     ),
@@ -63,17 +62,19 @@ SCREENER_METRICS: dict[
     ),
     ScreenerMetric.RETURN_1_YEAR_PERCENT: ScreenerMetricDefinition(
         provider_field="change_1y",
-        input_scale=NO_SCALE,
-        output_scale=NO_SCALE,
+        input_scale=PERCENT_TO_RATIO,
+        output_scale=RATIO_TO_PERCENT,
     ),
 }
+
+
 def get_metric_definition(
-        metric: ScreenerMetric,
+    metric: ScreenerMetric,
 ) -> ScreenerMetricDefinition:
     return SCREENER_METRICS[metric]
 
+
 def get_provider_field(
-        metric: ScreenerMetric,
+    metric: ScreenerMetric,
 ) -> str:
     return get_metric_definition(metric).provider_field
-

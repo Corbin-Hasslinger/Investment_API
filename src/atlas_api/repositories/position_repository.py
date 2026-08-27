@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 from sqlmodel import col, select
@@ -26,12 +25,13 @@ class PositionRepository:
         self.session.add(position)
         self.session.flush()
         return position
-    
-    def get_position_by_id(self, position_id: UUID, portfolio_id: UUID) -> Position | None:
+
+    def get_position_by_id(
+        self, position_id: UUID, portfolio_id: UUID
+    ) -> Position | None:
         return self.session.exec(
             select(Position).where(
-                Position.id == position_id,
-                Position.portfolio_id == portfolio_id
+                Position.id == position_id, Position.portfolio_id == portfolio_id
             )
         ).first()
 
@@ -42,7 +42,9 @@ class PositionRepository:
             .order_by(col(Position.created_at), col(Position.id))
         ).all()
 
-    def update_position(self, position_id: UUID, portfolio_id: UUID, payload: PositionUpdate) -> Position:
+    def update_position(
+        self, position_id: UUID, portfolio_id: UUID, payload: PositionUpdate
+    ) -> Position:
         position = self.get_position_by_id(position_id, portfolio_id)
         if position:
             for key, value in payload.model_dump(exclude_unset=True).items():
@@ -50,7 +52,9 @@ class PositionRepository:
             self.session.add(position)
             self.session.flush()
             return position
-        raise PositionNotFoundError(f"Position with ID {position_id} not found for portfolio {portfolio_id}")
+        raise PositionNotFoundError(
+            f"Position with ID {position_id} not found for portfolio {portfolio_id}"
+        )
 
     def delete_position(self, position_id: UUID, portfolio_id: UUID) -> None:
         position = self.get_position_by_id(position_id, portfolio_id)
@@ -59,8 +63,11 @@ class PositionRepository:
             self.session.flush()
 
     def exists_by_portfolio_and_security(self, symbol: str, portfolio_id: UUID) -> bool:
-        return self.session.exec(
-            select(Position).where(
-                Position.portfolio_id == portfolio_id,
-                Position.symbol == symbol)
-        ).first() is not None
+        return (
+            self.session.exec(
+                select(Position).where(
+                    Position.portfolio_id == portfolio_id, Position.symbol == symbol
+                )
+            ).first()
+            is not None
+        )

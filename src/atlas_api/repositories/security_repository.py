@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 from sqlmodel import col, select
@@ -35,7 +34,9 @@ class SecurityRepository:
 
     def get_all_securities(self) -> list[Security]:
         return self.session.exec(
-            select(Security).order_by(col(Security.symbol).asc(), col(Security.id).asc())
+            select(Security).order_by(
+                col(Security.symbol).asc(), col(Security.id).asc()
+            )
         ).all()
 
     def update_security(self, security_id: UUID, payload: SecurityUpdate) -> Security:
@@ -57,11 +58,10 @@ class SecurityRepository:
 
     def get_security_by_symbol(self, symbol: str) -> Security | None:
         """Retrieve a Security by its canonical symbol.
-        
+
         Returns None if not found (does not check upstream).
         Symbol should be pre-normalized.
         """
         return self.session.exec(
             select(Security).where(Security.symbol == symbol)
         ).first()
-

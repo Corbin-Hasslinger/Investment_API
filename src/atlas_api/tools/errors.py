@@ -1,4 +1,3 @@
-
 class PortfolioNotFoundError(Exception):
     """Exception raised when a portfolio is not found."""
 
@@ -22,7 +21,7 @@ class PositionNotFoundError(Exception):
 class InvalidPositionDataError(Exception):
     """Exception raised when the provided position data is invalid."""
 
-    
+
 class SecurityAlreadyExistsError(Exception):
     """Exception raised when a security already exists."""
 
@@ -53,6 +52,7 @@ class UpstreamRateLimitedError(Exception):
 
 class UpstreamUnavailableError(Exception):
     """Exception raised when an upstream API is unavailable."""
+
 
 class UpstreamResponseError(Exception):
     """Exception raised when an upstream API returns an unexpected response."""

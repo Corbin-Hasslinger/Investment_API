@@ -34,5 +34,5 @@ __all__ = [
     "UpstreamRateLimitedError",
     "UpstreamResponseError",
     "UpstreamTimeoutError",
-    "UpstreamUnavailableError"
+    "UpstreamUnavailableError",
 ]

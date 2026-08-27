@@ -43,7 +43,9 @@ def test_get_by_id_returns_none_for_wrong_user_id(session, user) -> None:
 
 def test_list_returns_only_that_users_portfolios(session, user) -> None:
     repository = PortfolioRepository(session)
-    other_user = User(email=f"other-{uuid4()}@example.com", hashed_password="hashed-password")
+    other_user = User(
+        email=f"other-{uuid4()}@example.com", hashed_password="hashed-password"
+    )
     session.add(other_user)
     session.commit()
     session.refresh(other_user)
@@ -111,12 +113,16 @@ def test_same_user_duplicate_name_is_rejected(session, user) -> None:
     except IntegrityError:
         session.rollback()
     else:
-        raise AssertionError("Expected same-user duplicate portfolio name to violate uniqueness.")
+        raise AssertionError(
+            "Expected same-user duplicate portfolio name to violate uniqueness."
+        )
 
 
 def test_different_users_can_share_the_same_name(session, user) -> None:
     repository = PortfolioRepository(session)
-    other_user = User(email=f"another-{uuid4()}@example.com", hashed_password="hashed-password")
+    other_user = User(
+        email=f"another-{uuid4()}@example.com", hashed_password="hashed-password"
+    )
     session.add(other_user)
     session.commit()
     session.refresh(other_user)

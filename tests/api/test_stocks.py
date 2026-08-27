@@ -10,17 +10,19 @@ from atlas_api.tools.errors import InvalidSymbolFormatError, UpstreamTimeoutErro
 def test_get_quote_returns_200_with_valid_data(client, override_dependency):
     """GET /market/quote/{ticker} returns 200 with quote data."""
     market_data_service = MagicMock(spec=MarketDataService)
-    market_data_service.get_quote = AsyncMock(return_value=StockQuote(
-        symbol="AAPL",
-        current_price=Decimal("150.25"),
-        price_change=Decimal("2.50"),
-        percent_change=Decimal("1.69"),
-        high_price=Decimal("152.00"),
-        low_price=Decimal("149.50"),
-        open_price=Decimal("149.00"),
-        previous_close_price=Decimal("147.75"),
-        timestamp=1692374400,
-    ))
+    market_data_service.get_quote = AsyncMock(
+        return_value=StockQuote(
+            symbol="AAPL",
+            current_price=Decimal("150.25"),
+            price_change=Decimal("2.50"),
+            percent_change=Decimal("1.69"),
+            high_price=Decimal("152.00"),
+            low_price=Decimal("149.50"),
+            open_price=Decimal("149.00"),
+            previous_close_price=Decimal("147.75"),
+            timestamp=1692374400,
+        )
+    )
 
     override_dependency(get_market_data_service, lambda: market_data_service)
 
@@ -57,4 +59,3 @@ def test_get_quote_returns_503_for_upstream_timeout(client, override_dependency)
     response = client.get("/market/quote/AAPL")
 
     assert response.status_code == 504
-

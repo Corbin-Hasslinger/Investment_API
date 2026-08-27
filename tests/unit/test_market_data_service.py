@@ -31,16 +31,18 @@ class TestGetQuote:
         finnhub_client: MagicMock,
     ):
         """get_quote() returns StockQuote with clean field names."""
-        finnhub_client.get_quote = AsyncMock(return_value={
-            "c": 150.25,      # current price
-            "d": 2.50,        # change
-            "dp": 1.69,       # percent change
-            "h": 152.00,      # high
-            "l": 149.50,      # low
-            "o": 149.00,      # open
-            "pc": 147.75,     # previous close
-            "t": 1692374400,  # timestamp
-        })
+        finnhub_client.get_quote = AsyncMock(
+            return_value={
+                "c": 150.25,  # current price
+                "d": 2.50,  # change
+                "dp": 1.69,  # percent change
+                "h": 152.00,  # high
+                "l": 149.50,  # low
+                "o": 149.00,  # open
+                "pc": 147.75,  # previous close
+                "t": 1692374400,  # timestamp
+            }
+        )
 
         result = await market_data_service.get_quote("aapl")
 
@@ -58,10 +60,18 @@ class TestGetQuote:
         finnhub_client: MagicMock,
     ):
         """get_quote() normalizes symbol before fetching."""
-        finnhub_client.get_quote = AsyncMock(return_value={
-            "c": 100.0, "d": 0, "dp": 0, "h": 100, "l": 100,
-            "o": 100, "pc": 100, "t": 1692374400,
-        })
+        finnhub_client.get_quote = AsyncMock(
+            return_value={
+                "c": 100.0,
+                "d": 0,
+                "dp": 0,
+                "h": 100,
+                "l": 100,
+                "o": 100,
+                "pc": 100,
+                "t": 1692374400,
+            }
+        )
 
         await market_data_service.get_quote(" msft ")
 

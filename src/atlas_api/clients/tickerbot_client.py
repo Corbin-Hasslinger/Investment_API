@@ -99,7 +99,7 @@ class TickerbotClient:
                 ) from exc
             if exc.response.status_code == 403:
                 raise UpstreamUnavailableError(
-                    "Tick erbot rejected the requested capability."
+                    "Tickerbot rejected the requested capability."
                 ) from exc
             if 500 <= exc.response.status_code < 600:
                 raise UpstreamUnavailableError(
