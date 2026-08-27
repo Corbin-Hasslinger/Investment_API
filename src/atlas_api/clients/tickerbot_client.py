@@ -8,39 +8,27 @@ from atlas_api.tools import (
 )
 
 type JsonPrimitive = str | int | float | bool | None
-type JsonValue = (
-    JsonPrimitive
-    | list[JsonValue]
-    | dict[str, JsonValue]
-)
+type JsonValue = JsonPrimitive | list[JsonValue] | dict[str, JsonValue]
 type JsonObject = dict[str, JsonValue]
+
 
 class TickerbotClient:
     REQUEST_TIMEOUT = 10.0
-    def __init__(
-            self, 
-            api_key: str, 
-            base_url: str
-    ) -> None:
+
+    def __init__(self, api_key: str, base_url: str) -> None:
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
 
-
     @staticmethod
-    def _expect_object(
-         data: JsonValue,
-         operation: str
-    ) -> JsonObject:
+    def _expect_object(data: JsonValue, operation: str) -> JsonObject:
         if not isinstance(data, dict):
             raise UpstreamResponseError(
-                f"Expected an object in response for operation '{operation}', but got: {data}"
+                f"Tickerbot returned an invalid {operation} response."
             )
         return data
 
     @staticmethod
-    def _validate_scan_response(
-        data: JsonObject
-    ) -> JsonObject:
+    def _validate_scan_response(data: JsonObject) -> JsonObject:
         results = data.get("results")
 
         if not isinstance(results, list):
@@ -53,15 +41,15 @@ class TickerbotClient:
                     "Expected each item in 'results' to be an object in scan response."
                 )
         return data
-    
+
     async def scan(
-            self,
-            query: str,
-            order: str,
-            direction: str,
-            limit: int,
-            columns: list[str],
-            cursor: str | None = None
+        self,
+        query: str,
+        order: str,
+        direction: str,
+        limit: int,
+        columns: list[str],
+        cursor: str | None = None,
     ) -> JsonObject:
         url = f"{self.base_url}/scan"
         json_columns: list[JsonValue] = list(columns)
@@ -79,9 +67,9 @@ class TickerbotClient:
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
-        try: 
+        try:
             async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT) as client:
                 response = await client.post(
                     url=url,
@@ -91,9 +79,7 @@ class TickerbotClient:
             response.raise_for_status()
 
         except httpx.TimeoutException as exc:
-                    raise UpstreamTimeoutError(
-                        "Tickerbot request timed out."
-                    ) from exc
+            raise UpstreamTimeoutError("Tickerbot request timed out.") from exc
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 429:
                 raise UpstreamRateLimitedError(
@@ -113,22 +99,24 @@ class TickerbotClient:
                 ) from exc
             if exc.response.status_code == 403:
                 raise UpstreamUnavailableError(
-                    "Tickerbot rejected the requested capability."
+                    "Tick erbot rejected the requested capability."
                 ) from exc
             if 500 <= exc.response.status_code < 600:
                 raise UpstreamUnavailableError(
                     "Tickerbot service unavailable."
                 ) from exc
-            raise
+            raise UpstreamResponseError(
+                "Tickerbot returned an unexpected error response."
+            ) from exc
         except httpx.RequestError as exc:
             raise UpstreamUnavailableError(
                 "Unable to communicate with Tickerbot."
             ) from exc
         try:
-             data: JsonValue = response.json()
+            data: JsonValue = response.json()
         except ValueError as exc:
-            raise UpstreamResponseError(
-                "Failed to parse Tickerbot response."
-            ) from exc
+            raise UpstreamResponseError("Failed to parse Tickerbot response.") from exc
 
-        return self._validate_scan_response(self._expect_object(data, "stock screening"))
+        return self._validate_scan_response(
+            self._expect_object(data, "stock screening")
+        )

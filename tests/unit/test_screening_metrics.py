@@ -44,7 +44,6 @@ def test_provider_mappings_for_differently_named_metrics(
         ScreenerMetric.RETURN_ON_EQUITY_TTM_PERCENT,
         ScreenerMetric.OPERATING_MARGIN_TTM_PERCENT,
         ScreenerMetric.NET_MARGIN_TTM_PERCENT,
-        ScreenerMetric.RETURN_1_YEAR_PERCENT,
     ],
 )
 def test_percentage_metrics_convert_input_percent_to_provider_ratio(metric: ScreenerMetric) -> None:
@@ -73,6 +72,15 @@ def test_operator_mapping(operator: ScreenerOperator, expected: str) -> None:
 def test_market_cap_metric_is_not_scaled() -> None:
     assert SCREENER_METRICS[ScreenerMetric.MARKET_CAP].input_scale == Decimal(1)
 
+@pytest.mark.parametrize(
+    "metric",
+    [
+        ScreenerMetric.REVENUE_GROWTH_YOY_PERCENT,
+        ScreenerMetric.RETURN_ON_EQUITY_TTM_PERCENT,
+        ScreenerMetric.OPERATING_MARGIN_TTM_PERCENT,
+        ScreenerMetric.NET_MARGIN_TTM_PERCENT,
+    ],
+)
 def test_percentage_metrics_convert_provider_ratio_to_atlas_percent(
     metric: ScreenerMetric,
 ) -> None:

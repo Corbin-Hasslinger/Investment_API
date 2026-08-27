@@ -209,3 +209,27 @@ async def test_scan_rejects_malformed_response_envelope(monkeypatch, provider_pa
 
     with pytest.raises(UpstreamResponseError):
         await scan(TickerbotClient(api_key="test-key", base_url="https://api.tickerbot.io/v2"))
+
+@pytest.mark.asyncio
+async def test_scan_maps_unexpected_http_error(
+    monkeypatch,
+) -> None:
+    post = AsyncMock(
+        return_value=response_with_json(
+            404,
+            {"error": "not found"},
+        )
+    )
+    monkeypatch.setattr(
+        httpx.AsyncClient,
+        "post",
+        post,
+    )
+
+    with pytest.raises(UpstreamResponseError):
+        await scan(
+            TickerbotClient(
+                api_key="test-key",
+                base_url="https://api.tickerbot.io/v2",
+            )
+        )
