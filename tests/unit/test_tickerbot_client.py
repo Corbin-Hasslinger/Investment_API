@@ -132,7 +132,11 @@ async def test_scan_returns_raw_provider_object(monkeypatch, provider_response) 
     )
 
     assert result == provider_response
-    assert result["results"][0]["ticker"] == "AAPL"
+    results = result["results"]
+    assert isinstance(results, list)
+    first_result = results[0]
+    assert isinstance(first_result, dict)
+    assert first_result["ticker"] == "AAPL"
 
 
 @pytest.mark.asyncio

@@ -613,7 +613,7 @@ client and verifies that research creates no Security or Position records.
 
 ## Milestone 6: Stock Screening
 
-**Status**: Planned
+**Status**: Complete
 
 Milestone 6 adds Atlas-owned stock screening backed by Tickerbot execution.
 The key product decision is that Atlas owns the screening language and the
@@ -640,7 +640,7 @@ depends on:
 - `asset_class=stocks` is accepted and should be the locked Atlas v1 universe.
 - `asset_type=CS` is the observed common-stock value in the current response and can be used as the current ETF exclusion rule.
 - `market_cap` is returned as a raw dollar amount.
-- `day_change_pct` and `gap_pct` are returned as decimal fractions.
+- `day_change_pct` is returned as a decimal fraction.
 - `null_coverage` reports in-scope rows, evaluable rows, and NULL rows for each predicate column.
 - Rows with NULL on a predicate column are not evaluated and never match.
 
@@ -664,10 +664,21 @@ depends on:
 - [x] Define `StockScreenerCriterion` and `StockScreenerRequest`
 - [x] Define `StockScreenerMetricsRead`, `StockScreenerResultRead`, `ScreenerMetricCoverageRead`, and `StockScreenerRead`
 - [x] Add request and response schema validation tests
-- [ ] Add a central metric registry for Atlas-to-Tickerbot mappings
-- [ ] Implement `ScreenerQueryCompiler` with whitelisted metrics and operators only
-- [ ] Add `TickerbotClient` with bearer authentication and scan request handling
-- [ ] Add `ScreenerService` for query compilation and response transformation
-- [ ] Add `POST /screeners/stocks` router wiring and dependency injection
-- [ ] Add compiler, client, service, and API tests
-- [ ] Update system overview and remaining design docs after implementation
+- [x] Add a central metric registry for Atlas-to-Tickerbot mappings
+- [x] Implement `ScreenerQueryCompiler` with whitelisted metrics and operators only
+- [x] Add `TickerbotClient` with bearer authentication and scan request handling
+- [x] Add `ScreenerService` for query compilation and response transformation
+- [x] Add `POST /screeners/stocks` router wiring and dependency injection
+- [x] Add compiler, client, service, and API tests
+- [x] Update system overview and remaining design docs after implementation
+
+### Completion notes
+
+Milestone 6 is implemented end to end: `POST /screeners/stocks` validates the
+Atlas-owned request model, compiles criteria into a Tickerbot-safe query, and
+returns normalized results and coverage metadata. The provider client uses
+bearer authentication, the configured `/v2` base URL, and an opaque cursor.
+Coverage counts are validated as nonnegative and internally consistent before
+they are returned. The implementation is covered by schema, compiler, client,
+service, API, and integration tests; it introduces no database dependency or
+migration. The full project suite passes 340 tests.

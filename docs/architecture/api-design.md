@@ -346,7 +346,7 @@ Returns available financial metrics for the security.
 
 `POST /screeners/stocks`
 
-Returns US-listed stocks matching Atlas-defined screening criteria.
+Returns common stocks matching Atlas-defined screening criteria.
 
 Atlas owns the screening language. Users submit Atlas metrics and operators only; Tickerbot query syntax is an internal implementation detail.
 
@@ -493,6 +493,9 @@ screening. Each coverage entry contains:
 - `evaluable`: number of securities with sufficient data to evaluate the metric
 - `missing`: number of securities for which the metric was unavailable
 
+All coverage counts are nonnegative, and `evaluable + missing` equals
+`in_scope` for each metric.
+
 A security with a missing value for a criterion cannot satisfy that criterion.
 The `next_cursor` value is opaque. Clients should return it unchanged when
 requesting the next page and should not inspect, modify, or construct cursor
@@ -564,7 +567,7 @@ Tickerbot was manually smoke-tested before the contract was locked.
 - `asset_class = stocks` is valid and is the locked universe scope for Atlas v1.
 - `asset_type = CS` is the observed common-stock value in the current provider response and is the current exclusion rule for funds and ETFs.
 - `market_cap` is returned as a raw dollar value.
-- Decimal-style provider fields such as `day_change_pct` and `gap_pct` are returned as decimal fractions, not percentage points.
+- `day_change_pct` is returned as a decimal fraction, not percentage points.
 - Provider `null_coverage` reports how many rows were in scope, how many were evaluable, and how many were NULL for each predicate column.
 - Rows with NULL on a predicate column do not match that predicate.
 

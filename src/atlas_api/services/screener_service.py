@@ -142,6 +142,20 @@ class ScreenerService:
             )
         return value
 
+    def _require_nonnegative_int(
+        self,
+        data: JsonObject,
+        field: str,
+    ) -> int:
+        value = self._require_int(data, field)
+
+        if value < 0:
+            raise UpstreamResponseError(
+                f"Tickerbot returned an invalid '{field}' value."
+            )
+
+        return value
+
     def _parse_as_of(self, provider_response: JsonObject) -> datetime:
         raw_value = self._require_str(provider_response, "as_of")
         try:
@@ -164,7 +178,7 @@ class ScreenerService:
                 "Tickerbot returned an invalid 'null_coverage' value."
             )
 
-        in_scope = self._require_int(null_coverage, "in_scope_rows")
+        in_scope = self._require_nonnegative_int(null_coverage, "in_scope_rows")
         columns = null_coverage.get("columns")
         if not isinstance(columns, dict):
             raise UpstreamResponseError(
@@ -178,12 +192,18 @@ class ScreenerService:
                 raise UpstreamResponseError(
                     "Tickerbot returned incomplete metric coverage."
                 )
+            evaluable = self._require_nonnegative_int(entry, "evaluable_rows")
+            missing = self._require_nonnegative_int(entry, "null_rows")
+            if evaluable + missing != in_scope:
+                raise UpstreamResponseError(
+                    "Tickerbot returned inconsistent metric coverage."
+                )
             coverage.append(
                 ScreenerMetricCoverageRead(
                     metric=metric,
                     in_scope=in_scope,
-                    evaluable=self._require_int(entry, "evaluable_rows"),
-                    missing=self._require_int(entry, "null_rows"),
+                    evaluable=evaluable,
+                    missing=missing,
                 )
             )
         return coverage

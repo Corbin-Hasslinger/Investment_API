@@ -339,6 +339,63 @@ async def test_screen_stocks_rejects_missing_requested_coverage(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "null_coverage",
+    [
+        {
+            "in_scope_rows": -1,
+            "columns": {
+                "pe_ratio": {"null_rows": 500, "evaluable_rows": 4500},
+            },
+        },
+        {
+            "in_scope_rows": 5000,
+            "columns": {
+                "pe_ratio": {"null_rows": -1, "evaluable_rows": 5001},
+            },
+        },
+        {
+            "in_scope_rows": 5000,
+            "columns": {
+                "pe_ratio": {"null_rows": 5001, "evaluable_rows": -1},
+            },
+        },
+    ],
+)
+async def test_screen_stocks_rejects_negative_coverage_counts(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+    null_coverage: dict[str, object],
+) -> None:
+    tickerbot_client.scan.return_value = build_provider_response(
+        _meta={"null_coverage": null_coverage}
+    )
+
+    with pytest.raises(UpstreamResponseError):
+        await service.screen_stocks(build_request())
+
+
+@pytest.mark.asyncio
+async def test_screen_stocks_rejects_inconsistent_coverage_counts(
+    service: ScreenerService,
+    tickerbot_client: AsyncMock,
+) -> None:
+    tickerbot_client.scan.return_value = build_provider_response(
+        _meta={
+            "null_coverage": {
+                "in_scope_rows": 5000,
+                "columns": {
+                    "pe_ratio": {"null_rows": 500, "evaluable_rows": 4501},
+                },
+            }
+        }
+    )
+
+    with pytest.raises(UpstreamResponseError):
+        await service.screen_stocks(build_request())
+
+
+@pytest.mark.asyncio
 async def test_screen_stocks_sends_no_cursor_on_first_page(
     service: ScreenerService,
     tickerbot_client: AsyncMock,

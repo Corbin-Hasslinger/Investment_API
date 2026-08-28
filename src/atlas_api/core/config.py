@@ -39,6 +39,19 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("TICKERBOT_API_KEY", "tickerbot_api_key"),
     )
+    groq_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("GROQ_API_KEY", "groq_api_key"),
+    )
+    ai_model: str = Field(
+        default="openai/gpt-oss-120b",
+        validation_alias=AliasChoices("AI_MODEL", "ai_model"),
+    )
+    ai_reasoning_effort: Literal["low", "medium", "high"] = Field(
+        default="medium",
+        validation_alias=AliasChoices("AI_REASONING_EFFORT", "ai_reasoning_effort"),
+    )
+
     tickerbot_base_url: str = Field(
         default="https://api.tickerbot.io/v2",
         validation_alias=AliasChoices("TICKERBOT_BASE_URL", "tickerbot_base_url"),
