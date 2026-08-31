@@ -4,8 +4,11 @@ from uuid import UUID
 from fastapi import Depends, Query
 from sqlmodel import Session
 
+from atlas_api.clients.groq_llm_client import GroqLLMClient
+from atlas_api.clients.llm_client import LLMClient
 from atlas_api.clients.tickerbot_client import TickerbotClient
 from atlas_api.screening.compiler import ScreenerQueryCompiler
+from atlas_api.services.ai_explanation_service import AIExplanationService
 from atlas_api.services.analysis_calculations import AnalysisCalculations
 from atlas_api.services.market_data_service import MarketDataService
 from atlas_api.services.portfolio_analytics_service import PortfolioAnalyticsService
@@ -87,6 +90,21 @@ def get_tickerbot_client(settings: SettingsDI) -> TickerbotClient:
 
 
 type TickerbotClientDI = Annotated[TickerbotClient, Depends(get_tickerbot_client)]
+
+
+def get_llm_client(settings: SettingsDI) -> LLMClient:
+    """Dependency function to provide an LLMClient instance."""
+    api_key = settings.groq_api_key
+    if api_key is None:
+        raise ValueError("GROQ_API_KEY is required to initialize the LLM client.")
+    return GroqLLMClient(
+        api_key=api_key.get_secret_value(),
+        model=settings.ai_model,
+        reasoning_effort=settings.ai_reasoning_effort,
+    )
+
+
+type LLMClientDI = Annotated[LLMClient, Depends(get_llm_client)]
 
 
 def get_screener_query_compiler() -> ScreenerQueryCompiler:
@@ -240,6 +258,28 @@ def get_research_service(
 
 
 type ResearchServiceDI = Annotated[ResearchService, Depends(get_research_service)]
+
+
+def get_ai_explanation_service(
+    llm_client: LLMClientDI,
+    portfolio_service: PortfolioServiceDI,
+    portfolio_analytics_service: PortfolioAnalyticsServiceDI,
+    research_service: ResearchServiceDI,
+    market_data_service: MarketDataServiceDI,
+) -> AIExplanationService:
+    """Dependency function to provide an AIExplanationService instance."""
+    return AIExplanationService(
+        llm_client=llm_client,
+        portfolio_service=portfolio_service,
+        portfolio_analytics_service=portfolio_analytics_service,
+        research_service=research_service,
+        market_data_service=market_data_service,
+    )
+
+
+type AIExplanationServiceDI = Annotated[
+    AIExplanationService, Depends(get_ai_explanation_service)
+]
 
 
 def get_pagination_params(

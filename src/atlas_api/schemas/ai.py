@@ -50,3 +50,12 @@ class SecurityExplanationRead(BaseModel):
     data_retrieved_at: AwareDatetime
     generated_at: AwareDatetime
     explanation: SecurityExplanationContent
+
+
+class StructuredPrompt(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    system_prompt: str
+    user_prompt: str
+    output_type: type[BaseModel]
+    schema_name: str
