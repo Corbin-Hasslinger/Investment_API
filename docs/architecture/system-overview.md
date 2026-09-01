@@ -36,7 +36,7 @@ Portfolio Domain   Analytics Domain   Research Domain   AI Workflows
       Database              External Providers
                             - Finnhub
                             - Tickerbot
-                            - OpenAI
+                            - GroqCloud / GPT-OSS 120B
                             - Future providers
 
 ## API Layer
@@ -259,13 +259,26 @@ endpoint-specific methods and explicitly transform provider payloads into
 Atlas response schemas, preventing Finnhub field names from becoming the
 public Atlas contract.
 
-### OpenAI Integration
+### LLM Integration
 
-OpenAI supports:
+Atlas currently uses GroqCloud with `openai/gpt-oss-120b` for:
  - Portfolio explanations
  - Company and ETF explanations
  - Research summaries
  - Future conversational research workflows
+
+```text
+AIExplanationService
+        |
+        v
+LLMClient
+        |
+        v
+GroqLLMClient
+        |
+        v
+GroqCloud / GPT-OSS 120B
+```
 
 AI inputs should be assembled from authoritative portfolio, analytics, and market data. AI output should not replace deterministic calculations or become the source of truth for financial facts.
 

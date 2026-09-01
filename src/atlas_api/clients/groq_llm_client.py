@@ -37,6 +37,9 @@ class GroqLLMClient:
             timeout=self.REQUEST_TIMEOUT,
         )
 
+    async def close(self) -> None:
+        await self.client.close()
+
     async def generate_structured(
         self,
         *,

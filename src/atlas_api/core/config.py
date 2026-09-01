@@ -53,6 +53,8 @@ class Settings(BaseSettings):
     )
     ai_max_completion_tokens: int = Field(
         default=4096,
+        ge=512,
+        le=65536,
         validation_alias=AliasChoices(
             "AI_MAX_COMPLETION_TOKENS", "ai_max_completion_tokens"
         ),

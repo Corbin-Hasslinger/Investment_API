@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from typing import Annotated
 from uuid import UUID
 
@@ -94,17 +95,22 @@ def get_tickerbot_client(settings: SettingsDI) -> TickerbotClient:
 type TickerbotClientDI = Annotated[TickerbotClient, Depends(get_tickerbot_client)]
 
 
-def get_llm_client(settings: SettingsDI) -> LLMClient:
-    """Dependency function to provide an LLMClient instance."""
+async def get_llm_client(settings: SettingsDI) -> AsyncIterator[LLMClient]:
+    """Provide a request-scoped LLM client and close it afterward."""
     api_key = settings.groq_api_key
     if api_key is None:
         raise ValueError("GROQ_API_KEY is required to initialize the LLM client.")
-    return GroqLLMClient(
+    client = GroqLLMClient(
         api_key=api_key.get_secret_value(),
         model=settings.ai_model,
         reasoning_effort=settings.ai_reasoning_effort,
         max_completion_tokens=settings.ai_max_completion_tokens,
     )
+
+    try:
+        yield client
+    finally:
+        await client.close()
 
 
 type LLMClientDI = Annotated[LLMClient, Depends(get_llm_client)]

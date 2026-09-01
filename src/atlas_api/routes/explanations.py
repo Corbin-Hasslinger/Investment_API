@@ -6,13 +6,12 @@ from atlas_api.di import AIExplanationServiceDI, CurrentUserDI
 from atlas_api.schemas.ai import PortfolioExplanationRead, SecurityExplanationRead
 
 router = APIRouter(
-    prefix="/explanations",
     tags=["Explanations"],
 )
 
 
 @router.post(
-    "/portfolios/{portfolio_id}",
+    "/portfolios/{portfolio_id}/explanations",
     response_model=PortfolioExplanationRead,
     summary="Generate AI explanation for a specific portfolio",
     status_code=status.HTTP_200_OK,
@@ -26,7 +25,7 @@ async def generate_portfolio_explanation(
 
 
 @router.post(
-    "/securities/{symbol}",
+    "/securities/{symbol}/explanations",
     response_model=SecurityExplanationRead,
     summary="Generate AI explanation for a specific security",
     status_code=status.HTTP_200_OK,

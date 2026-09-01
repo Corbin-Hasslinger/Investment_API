@@ -79,6 +79,7 @@ def create() -> AsyncMock:
 @pytest.fixture
 def client(groq_constructor: MagicMock, create: AsyncMock) -> GroqLLMClient:
     groq_constructor.return_value.chat.completions.create = create
+    groq_constructor.return_value.close = AsyncMock()
     return GroqLLMClient(
         api_key=API_KEY,
         model=MODEL,
@@ -103,6 +104,16 @@ def test_client_constructs_sdk_with_api_key_and_request_timeout(
         api_key=API_KEY,
         timeout=GroqLLMClient.REQUEST_TIMEOUT,
     )
+
+
+@pytest.mark.asyncio
+async def test_close_closes_underlying_groq_client(
+    client: GroqLLMClient,
+    groq_constructor: MagicMock,
+) -> None:
+    await client.close()
+
+    groq_constructor.return_value.close.assert_awaited_once()
 
 
 @pytest.mark.asyncio

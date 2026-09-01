@@ -73,7 +73,7 @@ def test_generate_portfolio_explanation_returns_200(client, override_dependency)
     service = override_ai_explanation_service(override_dependency)
     service.explain_portfolio.return_value = build_portfolio_explanation_read()
 
-    response = client.post(f"/explanations/portfolios/{PORTFOLIO_ID}")
+    response = client.post(f"/portfolios/{PORTFOLIO_ID}/explanations")
 
     assert response.status_code == 200
 
@@ -84,7 +84,7 @@ def test_generate_portfolio_explanation_returns_expected_shape(
     service = override_ai_explanation_service(override_dependency)
     service.explain_portfolio.return_value = build_portfolio_explanation_read()
 
-    response = client.post(f"/explanations/portfolios/{PORTFOLIO_ID}")
+    response = client.post(f"/portfolios/{PORTFOLIO_ID}/explanations")
 
     body = response.json()
     assert body["portfolio_id"] == str(PORTFOLIO_ID)
@@ -106,7 +106,7 @@ def test_generate_portfolio_explanation_passes_portfolio_id_and_current_user(
     service = override_ai_explanation_service(override_dependency)
     service.explain_portfolio.return_value = build_portfolio_explanation_read()
 
-    client.post(f"/explanations/portfolios/{PORTFOLIO_ID}")
+    client.post(f"/portfolios/{PORTFOLIO_ID}/explanations")
 
     service.explain_portfolio.assert_awaited_once_with(
         portfolio_id=PORTFOLIO_ID, user_id=CURRENT_USER_ID
@@ -121,7 +121,7 @@ def test_generate_portfolio_explanation_returns_404_for_portfolio_not_found(
         "Portfolio not found"
     )
 
-    response = client.post(f"/explanations/portfolios/{PORTFOLIO_ID}")
+    response = client.post(f"/portfolios/{PORTFOLIO_ID}/explanations")
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "portfolio_not_found"
@@ -150,7 +150,7 @@ def test_generate_portfolio_explanation_maps_upstream_errors(
     service = override_ai_explanation_service(override_dependency)
     service.explain_portfolio.side_effect = error
 
-    response = client.post(f"/explanations/portfolios/{PORTFOLIO_ID}")
+    response = client.post(f"/portfolios/{PORTFOLIO_ID}/explanations")
 
     assert response.status_code == expected_status
     assert response.json()["error"]["code"] == expected_code
@@ -160,7 +160,7 @@ def test_generate_security_explanation_returns_200(client, override_dependency) 
     service = override_ai_explanation_service(override_dependency)
     service.explain_security.return_value = build_security_explanation_read()
 
-    response = client.post("/explanations/securities/aapl")
+    response = client.post("/securities/aapl/explanations")
 
     assert response.status_code == 200
 
@@ -171,7 +171,7 @@ def test_generate_security_explanation_returns_expected_shape(
     service = override_ai_explanation_service(override_dependency)
     service.explain_security.return_value = build_security_explanation_read()
 
-    response = client.post("/explanations/securities/aapl")
+    response = client.post("/securities/aapl/explanations")
 
     body = response.json()
     assert body["symbol"] == "AAPL"
@@ -193,7 +193,7 @@ def test_generate_security_explanation_forwards_supplied_symbol(
     service = override_ai_explanation_service(override_dependency)
     service.explain_security.return_value = build_security_explanation_read()
 
-    client.post("/explanations/securities/aapl")
+    client.post("/securities/aapl/explanations")
 
     service.explain_security.assert_awaited_once_with(symbol="aapl")
 
@@ -221,7 +221,7 @@ def test_generate_security_explanation_maps_upstream_errors(
     service = override_ai_explanation_service(override_dependency)
     service.explain_security.side_effect = error
 
-    response = client.post("/explanations/securities/aapl")
+    response = client.post("/securities/aapl/explanations")
 
     assert response.status_code == expected_status
     assert response.json()["error"]["code"] == expected_code

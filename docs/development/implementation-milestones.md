@@ -682,3 +682,48 @@ Coverage counts are validated as nonnegative and internally consistent before
 they are returned. The implementation is covered by schema, compiler, client,
 service, API, and integration tests; it introduces no database dependency or
 migration. The full project suite passes 340 tests.
+
+## Milestone 7: AI Explanations
+
+**Status**: Complete
+
+Milestone 7 adds grounded AI explanations for portfolios and securities. Atlas
+assembles deterministic context from existing services, builds explicit prompts,
+requests strict structured output through the provider-neutral `LLMClient`
+interface, and returns typed explanation envelopes to API callers.
+
+### Product decisions
+
+- Portfolio endpoint: `POST /portfolios/{portfolio_id}/explanations`
+- Security endpoint: `POST /securities/{symbol}/explanations`
+- LLM provider: GroqCloud using `openai/gpt-oss-120b`
+- Output contract: strict Pydantic JSON schema validation
+- Prompt grounding: model may use only supplied Atlas data inside `<atlas_data>`
+- Safety boundary: no trade recommendations or personalized financial advice
+- Data scope: explanations are generated on demand and not persisted
+
+### Implementation checklist
+
+- [x] Add AI explanation schemas and strict output models
+- [x] Add portfolio and security AI context builders
+- [x] Add prompt builders with Atlas-data grounding and injection resistance
+- [x] Add provider-neutral `LLMClient` protocol
+- [x] Add `GroqLLMClient` with strict JSON Schema response format
+- [x] Add output-token ceiling through `AI_MAX_COMPLETION_TOKENS`
+- [x] Add request-scoped LLM dependency cleanup for `AsyncGroq`
+- [x] Add `AIExplanationService` orchestration
+- [x] Register resource-oriented explanation endpoints
+- [x] Cover schemas, prompts, client, settings, service, API, and composition tests
+- [x] Run live portfolio explanation smoke test with Finnhub and Groq
+- [x] Run live security explanation smoke test with Finnhub and Groq
+- [x] Complete three manual AI quality evaluations
+
+### Completion notes
+
+Milestone 7 is implemented end to end. The request-scoped Groq client is closed
+after FastAPI requests, explanation routes use the finalized resource-oriented
+URLs, and integration tests cover the HTTP-to-service composition layer with
+mocked external boundaries. Live smoke tests passed for one seeded portfolio and
+one AAPL security explanation against real Finnhub and Groq calls. Manual AI
+checks covered a concentrated portfolio, missing financial details, and prompt
+injection in portfolio source data.

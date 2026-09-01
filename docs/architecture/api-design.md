@@ -594,7 +594,7 @@ Generates a grounded explanation of the portfolio using current portfolio analyt
 
 ### Explain Security
 
-`POST /securities/{ticker}/explanations`
+`POST /securities/{symbol}/explanations`
 
 Generates a grounded explanation of a security using available market and financial information.
 

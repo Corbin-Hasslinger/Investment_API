@@ -466,14 +466,14 @@ def user_id():
     return uuid4()
 
 # Test Cases:
-# 1. POST /explanations/portfolios/{portfolio_id} returns 200 with valid PortfolioExplanationRead
-# 2. POST /explanations/portfolios/{portfolio_id} returns 404 if portfolio not found
-# 3. POST /explanations/portfolios/{portfolio_id} returns 504 if LLM times out
-# 4. POST /explanations/portfolios/{portfolio_id} returns 503 if LLM unavailable
-# 5. POST /explanations/portfolios/{portfolio_id} returns 429 if rate limited
-# 6. POST /explanations/portfolios/{portfolio_id} returns 400 if LLM returns validation error
-# 7. POST /explanations/securities/{symbol} returns 200 with valid SecurityExplanationRead
-# 8. POST /explanations/securities/{symbol} returns 504 if LLM times out
+# 1. POST /portfolios/{portfolio_id}/explanations returns 200 with valid PortfolioExplanationRead
+# 2. POST /portfolios/{portfolio_id}/explanations returns 404 if portfolio not found
+# 3. POST /portfolios/{portfolio_id}/explanations returns 504 if LLM times out
+# 4. POST /portfolios/{portfolio_id}/explanations returns 503 if LLM unavailable
+# 5. POST /portfolios/{portfolio_id}/explanations returns 429 if rate limited
+# 6. POST /portfolios/{portfolio_id}/explanations returns 400 if LLM returns validation error
+# 7. POST /securities/{symbol}/explanations returns 200 with valid SecurityExplanationRead
+# 8. POST /securities/{symbol}/explanations returns 504 if LLM times out
 # 9. Response includes correct data_retrieved_at and generated_at timestamps
 # 10. Response includes portfolio_id (portfolio endpoint) or symbol (security endpoint)
 ```
@@ -509,8 +509,8 @@ def user_id():
 ## Schema Recap
 
 **Request:**
-- `POST /explanations/portfolios/{portfolio_id}`: Path parameter + auth.
-- `POST /explanations/securities/{symbol}`: Path parameter + auth.
+- `POST /portfolios/{portfolio_id}/explanations`: Path parameter + auth.
+- `POST /securities/{symbol}/explanations`: Path parameter + auth.
 
 **Response:**
 - `PortfolioExplanationRead`: `portfolio_id` + `data_retrieved_at` + `generated_at` + `explanation` (PortfolioExplanationContent).
