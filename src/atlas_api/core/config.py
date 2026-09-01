@@ -51,6 +51,14 @@ class Settings(BaseSettings):
         default="medium",
         validation_alias=AliasChoices("AI_REASONING_EFFORT", "ai_reasoning_effort"),
     )
+    ai_max_completion_tokens: int = Field(
+        default=4096,
+        ge=512,
+        le=65536,
+        validation_alias=AliasChoices(
+            "AI_MAX_COMPLETION_TOKENS", "ai_max_completion_tokens"
+        ),
+    )
 
     tickerbot_base_url: str = Field(
         default="https://api.tickerbot.io/v2",
@@ -82,6 +90,10 @@ class Settings(BaseSettings):
         if self.environment != "test" and not self.tickerbot_api_key:
             raise ValueError(
                 "TICKERBOT_API_KEY is required. Set it in .env or as an environment variable."
+            )
+        if self.environment != "test" and not self.groq_api_key:
+            raise ValueError(
+                "GROQ_API_KEY is required. Set it in .env or as an environment variable."
             )
         if self.environment == "production" and not self.database_url:
             raise ValueError(

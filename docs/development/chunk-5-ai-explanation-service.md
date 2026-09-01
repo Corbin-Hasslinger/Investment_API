@@ -93,7 +93,7 @@ class AIExplanationService:
 **Implementation Pattern:**
 1. Call context builder (e.g., `build_portfolio_ai_context`).
 2. Call prompt builder (e.g., `build_portfolio_explanation_prompt`).
-3. Call `llm_client.generate_structured(...)` with system_prompt, user_prompt, output_type, schema_name.
+3. Call `llm_client.generate_structured(...)` with system_prompt, user_prompt, and output_type.
 4. Return the LLM output directly (it is already PortfolioExplanationContent or SecurityExplanationContent).
 5. Wrap with response envelope (PortfolioExplanationRead or SecurityExplanationRead) including portfolio_id/symbol, data_retrieved_at, generated_at.
 
@@ -160,7 +160,7 @@ type AIExplanationServiceDI = Annotated[
 
 ---
 
-### 3. Update `src/atlas_api/routes/portfolios.py`
+### 3. Update `src/atlas_api/routes/explanations.py`
 
 **Add to imports:**
 ```python
@@ -169,15 +169,15 @@ from atlas_api.schemas.ai import PortfolioExplanationRead
 from atlas_api.tools.errors import PortfolioNotFoundError, UpstreamTimeoutError, UpstreamUnavailableError, UpstreamRateLimitedError, UpstreamResponseError
 ```
 
-**Add new endpoint (after existing endpoints like GET /portfolios/{portfolio_id}/analytics):**
+**Add new endpoint:**
 ```python
-@router.get(
-    "/{portfolio_id}/explanation",
+@router.post(
+    "/portfolios/{portfolio_id}",
     response_model=PortfolioExplanationRead,
-    summary="Get portfolio explanation",
+    summary="Generate portfolio explanation",
     status_code=status.HTTP_200_OK,
 )
-async def get_portfolio_explanation(
+async def generate_portfolio_explanation(
     portfolio_id: UUID,
     current_user: CurrentUserDI,
     service: AIExplanationServiceDI,
@@ -278,13 +278,13 @@ router = APIRouter(
 )
 
 
-@router.get(
+@router.post(
     "/portfolios/{portfolio_id}",
     response_model=PortfolioExplanationRead,
-    summary="Get portfolio explanation",
+    summary="Generate portfolio explanation",
     status_code=status.HTTP_200_OK,
 )
-async def get_portfolio_explanation(
+async def generate_portfolio_explanation(
     portfolio_id: UUID,
     current_user: CurrentUserDI,
     service: AIExplanationServiceDI,
@@ -326,13 +326,13 @@ async def get_portfolio_explanation(
         ) from e
 
 
-@router.get(
+@router.post(
     "/securities/{symbol}",
     response_model=SecurityExplanationRead,
-    summary="Get security explanation",
+    summary="Generate security explanation",
     status_code=status.HTTP_200_OK,
 )
-async def get_security_explanation(
+async def generate_security_explanation(
     symbol: str,
     service: AIExplanationServiceDI,
     research_service: ResearchServiceDI,
@@ -431,7 +431,7 @@ def ai_explanation_service(mock_llm_client):
 # 9. explain_security with valid context returns SecurityExplanationRead with correct envelope
 # 10. explain_security propagates errors (timeout, unavailable, rate limited, response)
 # 11. explain_security does not require portfolio ownership check (public endpoint)
-# 12. LLMClient receives correct schema_name and output_type
+# 12. LLMClient receives correct output_type
 ```
 
 ---
@@ -466,14 +466,14 @@ def user_id():
     return uuid4()
 
 # Test Cases:
-# 1. GET /explanations/portfolios/{portfolio_id} returns 200 with valid PortfolioExplanationRead
-# 2. GET /explanations/portfolios/{portfolio_id} returns 404 if portfolio not found
-# 3. GET /explanations/portfolios/{portfolio_id} returns 504 if LLM times out
-# 4. GET /explanations/portfolios/{portfolio_id} returns 503 if LLM unavailable
-# 5. GET /explanations/portfolios/{portfolio_id} returns 429 if rate limited
-# 6. GET /explanations/portfolios/{portfolio_id} returns 400 if LLM returns validation error
-# 7. GET /explanations/securities/{symbol} returns 200 with valid SecurityExplanationRead
-# 8. GET /explanations/securities/{symbol} returns 504 if LLM times out
+# 1. POST /explanations/portfolios/{portfolio_id} returns 200 with valid PortfolioExplanationRead
+# 2. POST /explanations/portfolios/{portfolio_id} returns 404 if portfolio not found
+# 3. POST /explanations/portfolios/{portfolio_id} returns 504 if LLM times out
+# 4. POST /explanations/portfolios/{portfolio_id} returns 503 if LLM unavailable
+# 5. POST /explanations/portfolios/{portfolio_id} returns 429 if rate limited
+# 6. POST /explanations/portfolios/{portfolio_id} returns 400 if LLM returns validation error
+# 7. POST /explanations/securities/{symbol} returns 200 with valid SecurityExplanationRead
+# 8. POST /explanations/securities/{symbol} returns 504 if LLM times out
 # 9. Response includes correct data_retrieved_at and generated_at timestamps
 # 10. Response includes portfolio_id (portfolio endpoint) or symbol (security endpoint)
 ```
@@ -509,8 +509,8 @@ def user_id():
 ## Schema Recap
 
 **Request:**
-- `GET /explanations/portfolios/{portfolio_id}`: Path parameter + auth.
-- `GET /explanations/securities/{symbol}`: Path parameter + auth.
+- `POST /explanations/portfolios/{portfolio_id}`: Path parameter + auth.
+- `POST /explanations/securities/{symbol}`: Path parameter + auth.
 
 **Response:**
 - `PortfolioExplanationRead`: `portfolio_id` + `data_retrieved_at` + `generated_at` + `explanation` (PortfolioExplanationContent).

@@ -29,7 +29,7 @@ from atlas_api.tools.errors import (
 API_KEY = "test-key"
 MODEL = "openai/gpt-oss-120b"
 REASONING_EFFORT = "medium"
-SCHEMA_NAME = "portfolio_explanation"
+MAX_COMPLETION_TOKENS = 4096
 
 # Provider messages carry the key and raw body; Atlas must never surface either.
 LEAKY_MESSAGE = f"upstream failure for {API_KEY} with response body"
@@ -83,6 +83,7 @@ def client(groq_constructor: MagicMock, create: AsyncMock) -> GroqLLMClient:
         api_key=API_KEY,
         model=MODEL,
         reasoning_effort=REASONING_EFFORT,
+        max_completion_tokens=MAX_COMPLETION_TOKENS,
     )
 
 
@@ -91,7 +92,6 @@ async def generate(client: GroqLLMClient) -> PortfolioExplanationContent:
         system_prompt="System instructions",
         user_prompt="User data",
         output_type=PortfolioExplanationContent,
-        schema_name=SCHEMA_NAME,
     )
 
 
@@ -116,6 +116,7 @@ async def test_generate_structured_sends_configured_model_and_reasoning_effort(
     request = await_kwargs(create)
     assert request["model"] == MODEL
     assert request["reasoning_effort"] == REASONING_EFFORT
+    assert request["max_completion_tokens"] == MAX_COMPLETION_TOKENS
 
 
 @pytest.mark.asyncio
@@ -140,7 +141,7 @@ async def test_generate_structured_requests_strict_json_schema_response_format(
 
     response_format = await_kwargs(create)["response_format"]
     assert response_format["type"] == "json_schema"
-    assert response_format["json_schema"]["name"] == SCHEMA_NAME
+    assert response_format["json_schema"]["name"] == "PortfolioExplanationContent"
     assert response_format["json_schema"]["strict"] is True
     assert (
         response_format["json_schema"]["schema"]
@@ -220,11 +221,11 @@ async def test_generate_structured_rejects_malformed_responses(
         ),
         (
             lambda: build_status_error(AuthenticationError, 401),
-            UpstreamResponseError,
+            UpstreamUnavailableError,
         ),
         (
             lambda: build_status_error(PermissionDeniedError, 403),
-            UpstreamResponseError,
+            UpstreamUnavailableError,
         ),
     ],
     ids=[

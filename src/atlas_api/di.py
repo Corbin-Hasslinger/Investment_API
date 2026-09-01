@@ -28,9 +28,11 @@ from .services.position_service import PositionService
 from .tools import PaginationParams
 
 __all__ = [
+    "AIExplanationServiceDI",
     "AnalysisCalculationsDI",
     "CurrentUserDI",
     "FinnhubClientDI",
+    "LLMClientDI",
     "MarketDataServiceDI",
     "PaginationParams",
     "PortfolioAnalyticsServiceDI",
@@ -101,6 +103,7 @@ def get_llm_client(settings: SettingsDI) -> LLMClient:
         api_key=api_key.get_secret_value(),
         model=settings.ai_model,
         reasoning_effort=settings.ai_reasoning_effort,
+        max_completion_tokens=settings.ai_max_completion_tokens,
     )
 
 

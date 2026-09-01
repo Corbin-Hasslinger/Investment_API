@@ -57,5 +57,3 @@ class StructuredPrompt(BaseModel):
 
     system_prompt: str
     user_prompt: str
-    output_type: type[BaseModel]
-    schema_name: str

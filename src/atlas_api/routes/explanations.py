@@ -11,13 +11,13 @@ router = APIRouter(
 )
 
 
-@router.get(
+@router.post(
     "/portfolios/{portfolio_id}",
     response_model=PortfolioExplanationRead,
-    summary="Get AI-generated explanation for a specific portfolio",
+    summary="Generate AI explanation for a specific portfolio",
     status_code=status.HTTP_200_OK,
 )
-async def get_portfolio_explanation(
+async def generate_portfolio_explanation(
     portfolio_id: UUID, current_user: CurrentUserDI, service: AIExplanationServiceDI
 ) -> PortfolioExplanationRead:
     return await service.explain_portfolio(
@@ -25,13 +25,13 @@ async def get_portfolio_explanation(
     )
 
 
-@router.get(
+@router.post(
     "/securities/{symbol}",
     response_model=SecurityExplanationRead,
-    summary="Get AI-generated explanation for a specific security",
+    summary="Generate AI explanation for a specific security",
     status_code=status.HTTP_200_OK,
 )
-async def get_security_explanation(
+async def generate_security_explanation(
     symbol: str, service: AIExplanationServiceDI
 ) -> SecurityExplanationRead:
     return await service.explain_security(

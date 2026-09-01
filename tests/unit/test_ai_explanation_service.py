@@ -5,10 +5,6 @@ from uuid import uuid4
 
 import pytest
 
-from atlas_api.ai.prompts import (
-    PORTFOLIO_SCHEMA_NAME,
-    SECURITY_SCHEMA_NAME,
-)
 from atlas_api.schemas.ai import (
     PortfolioExplanationContent,
     PortfolioExplanationRead,
@@ -93,8 +89,6 @@ def portfolio_prompt() -> StructuredPrompt:
     return StructuredPrompt(
         system_prompt="Portfolio system prompt",
         user_prompt="Portfolio user prompt",
-        output_type=PortfolioExplanationContent,
-        schema_name=PORTFOLIO_SCHEMA_NAME,
     )
 
 
@@ -103,8 +97,6 @@ def security_prompt() -> StructuredPrompt:
     return StructuredPrompt(
         system_prompt="Security system prompt",
         user_prompt="Security user prompt",
-        output_type=SecurityExplanationContent,
-        schema_name=SECURITY_SCHEMA_NAME,
     )
 
 
@@ -166,7 +158,6 @@ async def test_explain_portfolio_passes_prompt_data_to_llm_client(
         system_prompt=portfolio_prompt.system_prompt,
         user_prompt=portfolio_prompt.user_prompt,
         output_type=PortfolioExplanationContent,
-        schema_name=PORTFOLIO_SCHEMA_NAME,
     )
 
 
@@ -255,7 +246,6 @@ async def test_explain_security_passes_prompt_data_to_llm_client(
         system_prompt=security_prompt.system_prompt,
         user_prompt=security_prompt.user_prompt,
         output_type=SecurityExplanationContent,
-        schema_name=SECURITY_SCHEMA_NAME,
     )
 
 

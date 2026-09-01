@@ -21,9 +21,17 @@ from atlas_api.tools.errors import (
 class GroqLLMClient:
     REQUEST_TIMEOUT = 60.0
 
-    def __init__(self, *, api_key: str, model: str, reasoning_effort: str):
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        model: str,
+        reasoning_effort: str,
+        max_completion_tokens: int,
+    ):
         self.model = model
         self.reasoning_effort = reasoning_effort
+        self.max_completion_tokens = max_completion_tokens
         self.client = AsyncGroq(
             api_key=api_key,
             timeout=self.REQUEST_TIMEOUT,
@@ -35,8 +43,8 @@ class GroqLLMClient:
         system_prompt: str,
         user_prompt: str,
         output_type: type[OutputModel],
-        schema_name: str,
     ) -> OutputModel:
+        schema_name = output_type.__name__
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
@@ -54,6 +62,7 @@ class GroqLLMClient:
                     'Literal["none", "default", "low", "medium", "high"]',
                     self.reasoning_effort,
                 ),
+                max_completion_tokens=self.max_completion_tokens,
                 response_format={
                     "type": "json_schema",
                     "json_schema": {
@@ -74,6 +83,11 @@ class GroqLLMClient:
                 "The Groq AI provider could not be reached."
             ) from exc
         except APIStatusError as exc:
+            if exc.status_code in {401, 403}:
+                raise UpstreamUnavailableError(
+                    "The Groq AI provider configuration is unavailable."
+                ) from exc
+
             if exc.status_code >= 500:
                 raise UpstreamUnavailableError(
                     "The Groq AI provider is unavailable."

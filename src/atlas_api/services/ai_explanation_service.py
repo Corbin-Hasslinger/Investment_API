@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from typing import cast
 from uuid import UUID
 
 from atlas_api.ai.context import build_portfolio_ai_context, build_security_ai_context
@@ -47,14 +46,10 @@ class AIExplanationService:
             portfolio_analytics_service=self.portfolio_analytics_service,
         )
         prompt = build_portfolio_explanation_prompt(context)
-        explanation = cast(
-            PortfolioExplanationContent,
-            await self.llm_client.generate_structured(
-                system_prompt=prompt.system_prompt,
-                user_prompt=prompt.user_prompt,
-                output_type=prompt.output_type,
-                schema_name=prompt.schema_name,
-            ),
+        explanation = await self.llm_client.generate_structured(
+            system_prompt=prompt.system_prompt,
+            user_prompt=prompt.user_prompt,
+            output_type=PortfolioExplanationContent,
         )
         generated_at = datetime.now(UTC)
         return PortfolioExplanationRead(
@@ -74,14 +69,10 @@ class AIExplanationService:
             research_service=self.research_service,
         )
         prompt = build_security_explanation_prompt(context)
-        explanation = cast(
-            SecurityExplanationContent,
-            await self.llm_client.generate_structured(
-                system_prompt=prompt.system_prompt,
-                user_prompt=prompt.user_prompt,
-                output_type=prompt.output_type,
-                schema_name=prompt.schema_name,
-            ),
+        explanation = await self.llm_client.generate_structured(
+            system_prompt=prompt.system_prompt,
+            user_prompt=prompt.user_prompt,
+            output_type=SecurityExplanationContent,
         )
         generated_at = datetime.now(UTC)
         return SecurityExplanationRead(

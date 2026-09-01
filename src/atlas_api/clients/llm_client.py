@@ -12,5 +12,4 @@ class LLMClient(Protocol):
         system_prompt: str,
         user_prompt: str,
         output_type: type[OutputModel],
-        schema_name: str,
     ) -> OutputModel: ...
