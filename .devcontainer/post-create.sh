@@ -13,4 +13,9 @@ echo "Synchronizing Python environment..."
 uv python install
 uv sync
 
+if [[ -f frontend/package-lock.json ]]; then
+    echo "Synchronizing frontend dependencies..."
+    npm --prefix frontend ci
+fi
+
 echo "Environment synchronized successfully."

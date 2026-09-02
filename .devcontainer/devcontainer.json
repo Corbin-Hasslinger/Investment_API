@@ -5,14 +5,22 @@
   "workspaceFolder": "/workspaces/atlas-api",
   "shutdownAction": "stopCompose",
 
-  "forwardPorts": [8000],
+  "forwardPorts": [8000, 4200],
 
   "portsAttributes": {
     "8000": {
       "label": "FastAPI"
+    },
+    "4200": {
+      "label": "Angular"
     }
   },
-
+  "features": {
+  "ghcr.io/devcontainers/features/node:2.1.0": {
+    "version": "24"
+  }
+  },
+  
   "customizations": {
     "vscode": {
       "settings": {

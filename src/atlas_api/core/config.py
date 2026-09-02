@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     api_port: int = 8000
     log_level: str = "INFO"
 
+    cors_allowed_origins: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
     finnhub_api_key: SecretStr | None = Field(
         default=None,
         validation_alias=AliasChoices("FINNHUB_API_KEY", "finnhub_api_key"),

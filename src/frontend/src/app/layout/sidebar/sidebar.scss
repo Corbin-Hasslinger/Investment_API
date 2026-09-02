@@ -1,0 +1,27 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 220px;
+  padding: 16px;
+  background: var(--atlas-surface);
+  border-right: 1px solid var(--atlas-border);
+
+  &__brand {
+    font-weight: 700;
+    color: var(--atlas-text);
+    margin: 0 0 12px;
+  }
+
+  a {
+    padding: 8px 12px;
+    border-radius: var(--atlas-radius-sm);
+    color: var(--atlas-text-muted);
+    text-decoration: none;
+
+    &.active {
+      background: var(--atlas-surface-subtle);
+      color: var(--atlas-primary);
+    }
+  }
+}
