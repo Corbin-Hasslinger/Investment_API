@@ -1,0 +1,50 @@
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+:root {
+  --atlas-bg: #f6f8fb;
+  --atlas-surface: #ffffff;
+  --atlas-surface-subtle: #f1f4f8;
+
+  --atlas-text: #172033;
+  --atlas-text-muted: #657086;
+
+  --atlas-border: #dde3ec;
+
+  --atlas-primary: #3157d5;
+  --atlas-primary-hover: #2849b5;
+
+  --atlas-positive: #16805b;
+  --atlas-negative: #c43d4d;
+  --atlas-warning: #a66a12;
+
+  --atlas-radius-sm: 8px;
+  --atlas-radius-md: 12px;
+  --atlas-radius-lg: 18px;
+
+  --atlas-shadow-sm: 0 1px 3px rgb(15 23 42 / 0.08);
+  --atlas-shadow-md: 0 8px 24px rgb(15 23 42 / 0.08);
+}
+
+body {
+  color-scheme: light;
+  margin: 0;
+  min-height: 100%;
+  background: var(--atlas-bg);
+  color: var(--atlas-text);
+  font: var(--mat-sys-body-medium);
+}
