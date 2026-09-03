@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../api-base-url';
 import { CompanyResearchRead } from '../models/research-model';
+import { encodeSymbol } from '../symbol';
 
 @Injectable({
 	providedIn: 'root',
@@ -17,19 +18,10 @@ export class ResearchApiService {
 	getCompanyResearch(
 		symbol: string,
 	): Observable<CompanyResearchRead> {
-		const encodedSymbol = this.getEncodedSymbol(symbol);
+		const encodedSymbol = encodeSymbol(symbol);
 
 		return this.http.get<CompanyResearchRead>(
 			`${this.baseUrl}/research/company/${encodedSymbol}`,
 		);
-	}
-
-	private getEncodedSymbol(
-		symbol: string,
-	): string {
-		const normalizedSymbol =
-			symbol.trim().toUpperCase();
-
-		return encodeURIComponent(normalizedSymbol);
 	}
 }

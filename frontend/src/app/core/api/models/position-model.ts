@@ -13,6 +13,6 @@ export interface PositionRead extends PositionCreate {
 }
 
 export interface PositionUpdate {
-	shares?: DecimalString | null;
-	average_cost?: DecimalString | null;
+	shares?: DecimalString;
+	average_cost?: DecimalString;
 }

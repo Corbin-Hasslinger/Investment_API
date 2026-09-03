@@ -40,11 +40,11 @@ describe('MarketApiService', () => {
       timestamp: 1788379200,
     };
 
-    service.getQuote(' brk/b ').subscribe((quote) => {
+    service.getQuote(' brk.b ').subscribe((quote) => {
       expect(quote).toEqual(response);
     });
 
-    const request = http.expectOne(`${baseUrl}/market/quote/BRK%2FB`);
+    const request = http.expectOne(`${baseUrl}/market/quote/BRK.B`);
     expect(request.request.method).toBe('GET');
     request.flush(response);
   });

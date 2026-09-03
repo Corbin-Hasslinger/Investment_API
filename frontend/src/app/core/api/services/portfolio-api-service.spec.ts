@@ -57,7 +57,8 @@ describe('PortfolioApiService', () => {
       description: 'Long-term holdings',
     };
     const response: PortfolioRead = {
-      ...payload,
+      name: payload.name,
+      description: payload.description ?? null,
       id: 'portfolio-1',
       user_id: 'user-1',
       created_at: '2026-09-02T00:00:00Z',

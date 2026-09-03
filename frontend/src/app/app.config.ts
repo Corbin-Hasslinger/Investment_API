@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { API_BASE_URL } from './core/api/api-base-url';
-import { apiErrorInterceptor } from './core/api/api-error-interceptor';
+import { apiErrorInterceptor } from './core/api/api-error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [

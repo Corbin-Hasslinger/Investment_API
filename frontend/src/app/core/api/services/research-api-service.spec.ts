@@ -30,7 +30,7 @@ describe('ResearchApiService', () => {
   it('normalizes and encodes the research symbol and returns company research', () => {
     const response: CompanyResearchRead = {
       company: {
-        symbol: 'RDS/A',
+        symbol: 'RDS-A',
         name: 'Example Energy',
         exchange: null,
         industry: null,
@@ -73,7 +73,7 @@ describe('ResearchApiService', () => {
       expect(research).toEqual(response);
     });
 
-    const request = http.expectOne(`${baseUrl}/research/company/RDS%2FA`);
+    const request = http.expectOne(`${baseUrl}/research/company/RDS-A`);
     expect(request.request.method).toBe('GET');
     request.flush(response);
   });

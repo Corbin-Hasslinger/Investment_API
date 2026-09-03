@@ -73,7 +73,6 @@ describe('PositionApiService', () => {
   it('patches the update payload on a nested position URL', () => {
     const payload: PositionUpdate = {
       shares: '8',
-      average_cost: null,
     };
     const response: PositionRead = {
       id: 'position-1',

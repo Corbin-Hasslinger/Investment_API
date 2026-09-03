@@ -54,7 +54,7 @@ describe('ExplanationApiService', () => {
 
   it('posts to the normalized security explanation URL with no body', () => {
     const response: SecurityExplanationRead = {
-      symbol: 'BRK/B',
+      symbol: 'BRK.B',
       data_retrieved_at: '2026-09-02T00:00:00Z',
       generated_at: '2026-09-02T00:01:00Z',
       explanation: {
@@ -69,11 +69,11 @@ describe('ExplanationApiService', () => {
       },
     };
 
-    service.explainSecurity(' brk/b ').subscribe((explanation) => {
+    service.explainSecurity(' brk.b ').subscribe((explanation) => {
       expect(explanation).toEqual(response);
     });
 
-    const request = http.expectOne(`${baseUrl}/securities/BRK%2FB/explanations`);
+    const request = http.expectOne(`${baseUrl}/securities/BRK.B/explanations`);
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toBeNull();
     request.flush(response);
